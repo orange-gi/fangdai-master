@@ -104,6 +104,7 @@ export const shadow = {
     shadowRadius: 10,
     elevation: 3,
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   glow: (_color: string) => ({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
