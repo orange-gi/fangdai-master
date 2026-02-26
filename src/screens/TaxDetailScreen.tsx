@@ -1,14 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TaxRecord, RootStackParamList } from '../types';
 import { taxService } from '../services/tax';
 import { propertyService } from '../services/property';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TaxDetail'>;
+
+const TAX_TYPE_MAP: Record<string, string> = {
+  income: '所得税',
+  property: '房产税',
+  'capital-gain': '资本利得税',
+  other: '其他',
+};
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: '待缴纳', color: colors.status.pending, bg: colors.status.pendingBg },
+  paid: { label: '已缴纳', color: colors.status.paid, bg: colors.status.paidBg },
+  overdue: { label: '逾期', color: colors.status.overdue, bg: colors.status.overdueBg },
+};
 
 export default function TaxDetailScreen({ navigation, route }: Props) {
   const { taxId } = route.params;
@@ -35,7 +56,7 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleMarkPaid = async () => {
+  const handleMarkPaid = () => {
     if (!record) return;
     Alert.alert('确认', '确定标记为已缴纳？', [
       { text: '取消', style: 'cancel' },
@@ -53,8 +74,8 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
     ]);
   };
 
-  const handleDelete = async () => {
-    Alert.alert('确认删除', '确定要删除这条税务记录吗？', [
+  const handleDelete = () => {
+    Alert.alert('确认删除', '确定要删除这条税务记录吗？此操作不可恢复。', [
       { text: '取消', style: 'cancel' },
       {
         text: '删除',
@@ -71,73 +92,87 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
     ]);
   };
 
-  const getTaxTypeName = (type: string) => {
-    const map: Record<string, string> = {
-      income: '所得税', property: '房产税', 'capital-gain': '资本利得税', other: '其他',
-    };
-    return map[type] || type;
-  };
-
-  const getStatusInfo = (status: string) => {
-    const map: Record<string, { name: string; color: string; bg: string }> = {
-      pending: { name: '待缴纳', color: '#ff9800', bg: '#fff3e0' },
-      paid: { name: '已缴纳', color: '#4caf50', bg: '#e8f5e9' },
-      overdue: { name: '逾期', color: '#f44336', bg: '#ffebee' },
-    };
-    return map[status] || { name: status, color: '#999', bg: '#f5f5f5' };
-  };
-
   if (loading || !record) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#2e7d32" style={{ marginTop: 40 }} />
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={colors.accent.gold} />
+          <Text style={styles.loadingText}>加载中...</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
-  const statusInfo = getStatusInfo(record.status);
+  const status = STATUS_CONFIG[record.status] || STATUS_CONFIG.pending;
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={[styles.statusBadge, { backgroundColor: statusInfo.bg }]}>
-            <Text style={[styles.statusText, { color: statusInfo.color }]}>{statusInfo.name}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
+            <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+            <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
           </View>
+
           <Text style={styles.amount}>¥{record.amount.toLocaleString()}</Text>
-          <Text style={styles.taxType}>{getTaxTypeName(record.taxType)}</Text>
+          <Text style={styles.taxType}>{TAX_TYPE_MAP[record.taxType] || record.taxType}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>详细信息</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>关联房产</Text>
-            <Text style={styles.infoValue}>{propertyName || '未知'}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>税务年度</Text>
-            <Text style={styles.infoValue}>{record.year}年</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>截止日期</Text>
-            <Text style={styles.infoValue}>{record.dueDate}</Text>
-          </View>
-          {record.paidDate && (
+
+          <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>缴纳日期</Text>
-              <Text style={[styles.infoValue, { color: '#4caf50' }]}>{record.paidDate}</Text>
+              <Text style={styles.infoLabel}>关联房产</Text>
+              <Text style={styles.infoValue}>{propertyName || '未知'}</Text>
             </View>
-          )}
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>税务年度</Text>
+              <Text style={styles.infoValue}>{record.year}年</Text>
+            </View>
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>税种类型</Text>
+              <Text style={styles.infoValue}>{TAX_TYPE_MAP[record.taxType] || record.taxType}</Text>
+            </View>
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>截止日期</Text>
+              <Text style={styles.infoValue}>{record.dueDate}</Text>
+            </View>
+
+            {record.paidDate && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>缴纳日期</Text>
+                  <Text style={[styles.infoValue, { color: colors.accent.jade }]}>
+                    {record.paidDate}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
         </View>
 
         <View style={styles.actions}>
           {record.status === 'pending' && (
-            <TouchableOpacity style={styles.payButton} onPress={handleMarkPaid}>
-              <Text style={styles.payButtonText}>标记已缴纳</Text>
+            <TouchableOpacity activeOpacity={0.85} onPress={handleMarkPaid}>
+              <LinearGradient
+                colors={['#E8B86D', '#D4956A']}
+                style={styles.payBtn}
+              >
+                <Text style={styles.payBtnText}>标记已缴纳</Text>
+              </LinearGradient>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>删除记录</Text>
+
+          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+            <Text style={styles.deleteBtnText}>删除记录</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -146,33 +181,114 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.bg.primary },
+  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  loadingText: { color: colors.text.tertiary, fontSize: fontSize.md },
+
   header: {
-    backgroundColor: '#fff', padding: 24, alignItems: 'center',
+    padding: spacing.xxl,
+    paddingTop: spacing.xxxl,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.subtle,
   },
   statusBadge: {
-    paddingHorizontal: 16, paddingVertical: 6, borderRadius: 16, marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    marginBottom: spacing.xl,
+    gap: spacing.sm,
   },
-  statusText: { fontSize: 14, fontWeight: '600' },
-  amount: { fontSize: 36, fontWeight: '700', color: '#333', marginBottom: 8 },
-  taxType: { fontSize: 16, color: '#666' },
-  section: { backgroundColor: '#fff', marginTop: 12, padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  amount: {
+    fontSize: fontSize.display || 40,
+    fontWeight: '800',
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    letterSpacing: -0.5,
+  },
+  taxType: {
+    fontSize: fontSize.lg,
+    color: colors.text.secondary,
+  },
+
+  section: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl,
+  },
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: spacing.lg,
+  },
+  infoCard: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
+  },
   infoRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
   },
-  infoLabel: { fontSize: 15, color: '#999' },
-  infoValue: { fontSize: 15, color: '#333', fontWeight: '500' },
-  actions: { padding: 16 },
-  payButton: {
-    backgroundColor: '#2e7d32', paddingVertical: 16, borderRadius: 12,
-    alignItems: 'center', marginBottom: 12,
+  infoLabel: {
+    fontSize: fontSize.md,
+    color: colors.text.tertiary,
   },
-  payButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  deleteButton: {
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#f44336',
-    paddingVertical: 16, borderRadius: 12, alignItems: 'center',
+  infoValue: {
+    fontSize: fontSize.md,
+    color: colors.text.primary,
+    fontWeight: '600',
   },
-  deleteButtonText: { color: '#f44336', fontSize: 16, fontWeight: '600' },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border.subtle,
+  },
+
+  actions: {
+    padding: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.huge,
+    gap: spacing.md,
+  },
+  payBtn: {
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    ...shadow.elevated,
+  },
+  payBtnText: {
+    color: colors.text.inverse,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  deleteBtn: {
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(232,124,109,0.4)',
+  },
+  deleteBtnText: {
+    color: colors.accent.coral,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
 });

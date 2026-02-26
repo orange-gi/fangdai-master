@@ -9,19 +9,21 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PropertyType, RootStackParamList } from '../types';
 import { propertyService } from '../services/property';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProperty'>;
 
-const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
-  { value: 'apartment', label: '公寓' },
-  { value: 'house', label: '别墅' },
-  { value: 'land', label: '土地' },
-  { value: 'commercial', label: '商业地产' },
-  { value: 'other', label: '其他' },
+const TYPES: { value: PropertyType; label: string; icon: string }[] = [
+  { value: 'apartment', label: '公寓', icon: '🏢' },
+  { value: 'house', label: '别墅', icon: '🏡' },
+  { value: 'land', label: '土地', icon: '🌍' },
+  { value: 'commercial', label: '商铺', icon: '🏬' },
+  { value: 'other', label: '其他', icon: '📦' },
 ];
 
 export default function EditPropertyScreen({ navigation, route }: Props) {
@@ -61,9 +63,19 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
     }
   };
 
+  const update = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+
   const handleSubmit = async () => {
     if (!form.name.trim()) {
       Alert.alert('提示', '请输入房产名称');
+      return;
+    }
+    if (!form.address.trim()) {
+      Alert.alert('提示', '请输入地址');
+      return;
+    }
+    if (!form.purchasePrice) {
+      Alert.alert('提示', '请输入购入价格');
       return;
     }
     setSaving(true);
@@ -74,7 +86,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
         type: form.type,
         purchaseDate: form.purchaseDate,
         purchasePrice: parseFloat(form.purchasePrice) || 0,
-        currentValue: parseFloat(form.currentValue) || 0,
+        currentValue: parseFloat(form.currentValue) || parseFloat(form.purchasePrice) || 0,
       });
       Alert.alert('成功', '房产信息已更新', [
         { text: '确定', onPress: () => navigation.goBack() },
@@ -86,138 +98,168 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
     }
   };
 
-  const updateForm = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#2e7d32" style={{ marginTop: 40 }} />
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={colors.accent.gold} />
+          <Text style={styles.loadingText}>加载中...</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>房产类型</Text>
+          <View style={styles.typeGrid}>
+            {TYPES.map(t => (
+              <TouchableOpacity
+                key={t.value}
+                style={[styles.typeItem, form.type === t.value && styles.typeActive]}
+                onPress={() => update('type', t.value)}
+              >
+                <Text style={styles.typeIcon}>{t.icon}</Text>
+                <Text style={[styles.typeLabel, form.type === t.value && styles.typeLabelActive]}>
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>基本信息</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>房产名称 *</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={(v) => updateForm('name', v)}
-              placeholder="例如：洛杉矶公寓"
-              placeholderTextColor="#ccc"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>房产类型</Text>
-            <View style={styles.typeSelector}>
-              {PROPERTY_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type.value}
-                  style={[styles.typeButton, form.type === type.value && styles.typeButtonActive]}
-                  onPress={() => updateForm('type', type.value)}
-                >
-                  <Text style={[styles.typeButtonText, form.type === type.value && styles.typeButtonTextActive]}>
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>地址</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={form.address}
-              onChangeText={(v) => updateForm('address', v)}
-              placeholder="详细地址"
-              placeholderTextColor="#ccc"
-              multiline
-              numberOfLines={3}
-            />
-          </View>
+          <Text style={styles.label}>房产名称 *</Text>
+          <TextInput
+            style={styles.input}
+            value={form.name}
+            onChangeText={v => update('name', v)}
+            placeholder="例如：洛杉矶公寓"
+            placeholderTextColor={colors.text.tertiary}
+          />
+          <Text style={styles.label}>详细地址 *</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={form.address}
+            onChangeText={v => update('address', v)}
+            placeholder="街道、城市、州、邮编"
+            placeholderTextColor={colors.text.tertiary}
+            multiline
+            numberOfLines={3}
+          />
+          <Text style={styles.label}>购入日期</Text>
+          <TextInput
+            style={styles.input}
+            value={form.purchaseDate}
+            onChangeText={v => update('purchaseDate', v)}
+            placeholder="2024-01-01"
+            placeholderTextColor={colors.text.tertiary}
+          />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>💰 价格信息</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>购入日期</Text>
-            <TextInput
-              style={styles.input}
-              value={form.purchaseDate}
-              onChangeText={(v) => updateForm('purchaseDate', v)}
-              placeholder="格式：2024-01-01"
-              placeholderTextColor="#ccc"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>购入价格 (CNY)</Text>
-            <TextInput
-              style={styles.input}
-              value={form.purchasePrice}
-              onChangeText={(v) => updateForm('purchasePrice', v)}
-              placeholder="购入价格"
-              placeholderTextColor="#ccc"
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>当前估值 (CNY)</Text>
-            <TextInput
-              style={styles.input}
-              value={form.currentValue}
-              onChangeText={(v) => updateForm('currentValue', v)}
-              placeholder="当前估值"
-              placeholderTextColor="#ccc"
-              keyboardType="numeric"
-            />
-          </View>
+          <Text style={styles.label}>购入价格 (CNY) *</Text>
+          <TextInput
+            style={styles.input}
+            value={form.purchasePrice}
+            onChangeText={v => update('purchasePrice', v)}
+            placeholder="请输入购入价格"
+            placeholderTextColor={colors.text.tertiary}
+            keyboardType="numeric"
+          />
+          <Text style={styles.label}>当前估值 (CNY)</Text>
+          <TextInput
+            style={styles.input}
+            value={form.currentValue}
+            onChangeText={v => update('currentValue', v)}
+            placeholder="留空则使用购入价格"
+            placeholderTextColor={colors.text.tertiary}
+            keyboardType="numeric"
+          />
         </View>
 
-        <TouchableOpacity
-          style={[styles.submitButton, saving && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={saving}
-        >
-          <Text style={styles.submitButtonText}>
-            {saving ? '保存中...' : '保存修改'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.submitWrap}>
+          <TouchableOpacity activeOpacity={0.85} onPress={handleSubmit} disabled={saving}>
+            <LinearGradient
+              colors={saving ? ['#9E7B3F', '#8A6A3A'] : ['#E8B86D', '#D4956A']}
+              style={styles.submitBtn}
+            >
+              <Text style={styles.submitText}>{saving ? '保存中...' : '保存修改'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  scrollView: { flex: 1 },
-  section: { backgroundColor: '#fff', marginBottom: 12, padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 },
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 14, color: '#666', marginBottom: 8 },
+  container: { flex: 1, backgroundColor: colors.bg.primary },
+  scroll: { flex: 1 },
+  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  loadingText: { color: colors.text.tertiary, fontSize: fontSize.md, marginTop: spacing.sm },
+  section: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.subtle,
+  },
+  sectionTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
+  },
+  typeGrid: { flexDirection: 'row', gap: spacing.sm },
+  typeItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    backgroundColor: colors.bg.card,
+  },
+  typeActive: {
+    borderColor: colors.accent.gold,
+    backgroundColor: 'rgba(232,184,109,0.08)',
+  },
+  typeIcon: { fontSize: 22, marginBottom: 4 },
+  typeLabel: { fontSize: fontSize.xs, color: colors.text.tertiary },
+  typeLabelActive: { color: colors.accent.gold, fontWeight: '600' },
+  label: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    marginBottom: spacing.sm,
+    marginTop: spacing.md,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
   input: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 12, fontSize: 16,
-    color: '#333', backgroundColor: '#fafafa',
+    backgroundColor: colors.bg.input,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    fontSize: fontSize.md,
+    color: colors.text.primary,
   },
   textArea: { height: 80, textAlignVertical: 'top' },
-  typeSelector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  typeButton: {
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#fafafa',
+  submitWrap: { padding: spacing.xl, paddingBottom: spacing.huge },
+  submitBtn: {
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    ...shadow.elevated,
   },
-  typeButtonActive: { backgroundColor: '#2e7d32', borderColor: '#2e7d32' },
-  typeButtonText: { fontSize: 14, color: '#666' },
-  typeButtonTextActive: { color: '#fff' },
-  submitButton: {
-    backgroundColor: '#2e7d32', marginHorizontal: 16, marginVertical: 24,
-    paddingVertical: 16, borderRadius: 12, alignItems: 'center',
+  submitText: {
+    color: colors.bg.primary,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
   },
-  submitButtonDisabled: { backgroundColor: '#a5d6a7' },
-  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
 });
