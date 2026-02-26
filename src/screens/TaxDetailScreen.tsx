@@ -8,7 +8,6 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TaxRecord, RootStackParamList } from '../types';
@@ -49,8 +48,8 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
         const prop = await propertyService.get(taxData.propertyId);
         if (prop) setPropertyName(prop.name);
       }
-    } catch (error) {
-      console.error('加载失败:', error);
+    } catch {
+      /* ignore */
     } finally {
       setLoading(false);
     }
@@ -96,7 +95,7 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={colors.accent.gold} />
+          <ActivityIndicator size="large" color={colors.accent.primary} />
           <Text style={styles.loadingText}>加载中...</Text>
         </View>
       </SafeAreaView>
@@ -150,7 +149,7 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
                 <View style={styles.divider} />
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>缴纳日期</Text>
-                  <Text style={[styles.infoValue, { color: colors.accent.jade }]}>
+                  <Text style={[styles.infoValue, { color: colors.accent.primary }]}>
                     {record.paidDate}
                   </Text>
                 </View>
@@ -161,13 +160,8 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
 
         <View style={styles.actions}>
           {record.status === 'pending' && (
-            <TouchableOpacity activeOpacity={0.85} onPress={handleMarkPaid}>
-              <LinearGradient
-                colors={['#E8B86D', '#D4956A']}
-                style={styles.payBtn}
-              >
-                <Text style={styles.payBtnText}>标记已缴纳</Text>
-              </LinearGradient>
+            <TouchableOpacity style={styles.payBtn} activeOpacity={0.8} onPress={handleMarkPaid}>
+              <Text style={styles.payBtnText}>标记已缴纳</Text>
             </TouchableOpacity>
           )}
 
@@ -182,7 +176,12 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg.primary },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
   loadingText: { color: colors.text.tertiary, fontSize: fontSize.md },
 
   header: {
@@ -208,14 +207,13 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   amount: {
-    fontSize: fontSize.display || 40,
-    fontWeight: '800',
+    fontSize: 34,
+    fontWeight: '700',
     color: colors.text.primary,
     marginBottom: spacing.sm,
-    letterSpacing: -0.5,
   },
   taxType: {
     fontSize: fontSize.lg,
@@ -227,16 +225,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
   },
   sectionTitle: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.text.tertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: spacing.lg,
   },
   infoCard: {
     backgroundColor: colors.bg.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border.subtle,
@@ -269,26 +265,27 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   payBtn: {
+    backgroundColor: colors.accent.primary,
     paddingVertical: 16,
     borderRadius: radius.lg,
     alignItems: 'center',
-    ...shadow.elevated,
+    ...shadow.card,
   },
   payBtnText: {
     color: colors.text.inverse,
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   deleteBtn: {
     paddingVertical: 16,
     borderRadius: radius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(232,124,109,0.4)',
+    borderColor: colors.accent.coralLight,
   },
   deleteBtnText: {
     color: colors.accent.coral,
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });

@@ -8,7 +8,6 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TaxRecord, RootStackParamList } from '../types';
@@ -38,7 +37,12 @@ const FILTERS: { key: 'all' | 'pending' | 'paid'; label: string }[] = [
 
 export default function TaxCenterScreen({ navigation }: Props) {
   const [records, setRecords] = useState<TaxRecord[]>([]);
-  const [stats, setStats] = useState({ pendingAmount: 0, paidAmount: 0, pendingCount: 0, paidCount: 0 });
+  const [stats, setStats] = useState({
+    pendingAmount: 0,
+    paidAmount: 0,
+    pendingCount: 0,
+    paidCount: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'paid'>('all');
@@ -51,8 +55,8 @@ export default function TaxCenterScreen({ navigation }: Props) {
       ]);
       setRecords(listData);
       setStats(statsData);
-    } catch (error) {
-      console.error('加载税务记录失败:', error);
+    } catch {
+      /* ignore */
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -63,83 +67,57 @@ export default function TaxCenterScreen({ navigation }: Props) {
     loadData();
   }, [loadData]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
-  };
-
-  const filteredRecords = filter === 'all' ? records : records.filter(r => r.status === filter);
+  const filteredRecords = filter === 'all' ? records : records.filter((r) => r.status === filter);
 
   const handleMarkPaid = async (id: string) => {
     try {
       await taxService.markPaid(id);
       loadData();
-    } catch (error) {
-      console.error('标记缴纳失败:', error);
+    } catch {
+      /* ignore */
     }
   };
 
-  const renderStatCards = () => (
-    <View style={styles.statsRow}>
-      <View style={[styles.statCard, styles.statCardPending]}>
-        <View style={styles.statIconWrap}>
-          <Text style={styles.statIcon}>⏳</Text>
+  const renderHeader = () => (
+    <View>
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>待缴纳</Text>
+          <Text style={styles.statValuePending}>¥{stats.pendingAmount.toLocaleString()}</Text>
+          <Text style={styles.statCount}>{stats.pendingCount} 笔</Text>
         </View>
-        <Text style={styles.statLabel}>待缴纳</Text>
-        <Text style={styles.statValuePending}>
-          ¥{stats.pendingAmount.toLocaleString()}
-        </Text>
-        <Text style={styles.statCount}>{stats.pendingCount} 笔</Text>
-      </View>
-      <View style={[styles.statCard, styles.statCardPaid]}>
-        <View style={styles.statIconWrap}>
-          <Text style={styles.statIcon}>✅</Text>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>已缴纳</Text>
+          <Text style={styles.statValuePaid}>¥{stats.paidAmount.toLocaleString()}</Text>
+          <Text style={styles.statCount}>{stats.paidCount} 笔</Text>
         </View>
-        <Text style={styles.statLabel}>已缴纳</Text>
-        <Text style={styles.statValuePaid}>
-          ¥{stats.paidAmount.toLocaleString()}
-        </Text>
-        <Text style={styles.statCount}>{stats.paidCount} 笔</Text>
       </View>
-    </View>
-  );
 
-  const renderAIButton = () => (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={() => navigation.navigate('TaxConsultation')}
-    >
-      <LinearGradient
-        colors={['#E8B86D', '#D4956A', '#C87E5A']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.aiButton}
+      <TouchableOpacity
+        style={styles.aiBtn}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('TaxConsultation')}
       >
-        <View style={styles.aiContent}>
-          <Text style={styles.aiEmoji}>🤖</Text>
-          <View>
-            <Text style={styles.aiTitle}>AI 税务咨询</Text>
-            <Text style={styles.aiSubtitle}>智能分析 · 专业建议</Text>
-          </View>
+        <View>
+          <Text style={styles.aiTitle}>AI 税务咨询</Text>
+          <Text style={styles.aiSubtitle}>智能分析 · 专业建议</Text>
         </View>
         <Text style={styles.aiArrow}>→</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
 
-  const renderFilters = () => (
-    <View style={styles.filterRow}>
-      {FILTERS.map(f => (
-        <TouchableOpacity
-          key={f.key}
-          style={[styles.filterTab, filter === f.key && styles.filterTabActive]}
-          onPress={() => setFilter(f.key)}
-        >
-          <Text style={[styles.filterText, filter === f.key && styles.filterTextActive]}>
-            {f.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      <View style={styles.filterRow}>
+        {FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.key}
+            style={[styles.filterTab, filter === f.key && styles.filterTabActive]}
+            onPress={() => setFilter(f.key)}
+          >
+            <Text style={[styles.filterText, filter === f.key && styles.filterTextActive]}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 
@@ -148,7 +126,7 @@ export default function TaxCenterScreen({ navigation }: Props) {
     return (
       <TouchableOpacity
         style={styles.recordCard}
-        activeOpacity={0.8}
+        activeOpacity={0.7}
         onPress={() => navigation.navigate('TaxDetail', { taxId: item.id })}
       >
         <View style={styles.recordHeader}>
@@ -165,48 +143,27 @@ export default function TaxCenterScreen({ navigation }: Props) {
 
         <View style={styles.recordFooter}>
           <Text style={styles.recordDue}>截止日期: {item.dueDate}</Text>
-          {item.paidDate && (
-            <Text style={styles.recordPaid}>已缴: {item.paidDate}</Text>
-          )}
+          {item.paidDate && <Text style={styles.recordPaid}>已缴: {item.paidDate}</Text>}
         </View>
 
         {item.status === 'pending' && (
           <TouchableOpacity
             style={styles.markPaidBtn}
+            activeOpacity={0.8}
             onPress={() => handleMarkPaid(item.id)}
           >
-            <LinearGradient
-              colors={['#E8B86D', '#D4956A']}
-              style={styles.markPaidGradient}
-            >
-              <Text style={styles.markPaidText}>标记已缴纳</Text>
-            </LinearGradient>
+            <Text style={styles.markPaidText}>标记已缴纳</Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.emptyWrap}>
-      <Text style={styles.emptyIcon}>📋</Text>
-      <Text style={styles.emptyText}>暂无税务记录</Text>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View>
-      {renderStatCards()}
-      <View style={styles.aiWrap}>{renderAIButton()}</View>
-      {renderFilters()}
-    </View>
-  );
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={colors.accent.gold} />
+          <ActivityIndicator size="large" color={colors.accent.primary} />
         </View>
       </SafeAreaView>
     );
@@ -216,17 +173,24 @@ export default function TaxCenterScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <FlatList
         data={filteredRecords}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={renderRecord}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmpty}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyText}>暂无税务记录</Text>
+          </View>
+        }
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.accent.gold}
+            onRefresh={() => {
+              setRefreshing(true);
+              loadData();
+            }}
+            tintColor={colors.accent.primary}
           />
         }
       />
@@ -248,32 +212,27 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: colors.bg.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.lg,
     borderWidth: 1,
+    borderColor: colors.border.subtle,
     ...shadow.card,
   },
-  statCardPending: { borderColor: colors.border.accent },
-  statCardPaid: { borderColor: colors.border.subtle },
-  statIconWrap: { marginBottom: spacing.sm },
-  statIcon: { fontSize: 20 },
   statLabel: {
     fontSize: fontSize.xs,
     color: colors.text.tertiary,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   statValuePending: {
     fontSize: fontSize.xxl,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.accent.gold,
     marginBottom: 2,
   },
   statValuePaid: {
     fontSize: fontSize.xxl,
-    fontWeight: '800',
-    color: colors.accent.jade,
+    fontWeight: '700',
+    color: colors.accent.primary,
     marginBottom: 2,
   },
   statCount: {
@@ -281,20 +240,32 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
   },
 
-  aiWrap: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
-  aiButton: {
-    borderRadius: radius.xl,
-    padding: spacing.xl,
+  aiBtn: {
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.lg,
+    backgroundColor: colors.accent.primary,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...shadow.elevated,
+    ...shadow.card,
   },
-  aiContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  aiEmoji: { fontSize: 28 },
-  aiTitle: { fontSize: fontSize.lg, fontWeight: '700', color: colors.text.inverse },
-  aiSubtitle: { fontSize: fontSize.xs, color: 'rgba(8,12,24,0.6)', marginTop: 2 },
-  aiArrow: { fontSize: fontSize.xxl, color: colors.text.inverse, fontWeight: '300' },
+  aiTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.text.inverse,
+  },
+  aiSubtitle: {
+    fontSize: fontSize.xs,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+  aiArrow: {
+    fontSize: fontSize.xl,
+    color: colors.text.inverse,
+  },
 
   filterRow: {
     flexDirection: 'row',
@@ -312,8 +283,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border.subtle,
   },
   filterTabActive: {
-    backgroundColor: 'rgba(232,184,109,0.12)',
-    borderColor: colors.accent.gold,
+    backgroundColor: colors.accent.primaryLight,
+    borderColor: colors.accent.primary,
   },
   filterText: {
     fontSize: fontSize.sm,
@@ -321,7 +292,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterTextActive: {
-    color: colors.accent.gold,
+    color: colors.accent.primary,
     fontWeight: '600',
   },
 
@@ -343,7 +314,7 @@ const styles = StyleSheet.create({
   },
   recordType: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.text.primary,
   },
   recordYear: {
@@ -361,8 +332,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   recordAmount: {
-    fontSize: fontSize.hero,
-    fontWeight: '800',
+    fontSize: fontSize.xxl,
+    fontWeight: '700',
     color: colors.text.primary,
     marginBottom: spacing.sm,
   },
@@ -377,10 +348,11 @@ const styles = StyleSheet.create({
   },
   recordPaid: {
     fontSize: fontSize.sm,
-    color: colors.accent.jade,
+    color: colors.accent.primary,
   },
-  markPaidBtn: { marginTop: spacing.md },
-  markPaidGradient: {
+  markPaidBtn: {
+    marginTop: spacing.md,
+    backgroundColor: colors.accent.primary,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     alignItems: 'center',
@@ -388,14 +360,13 @@ const styles = StyleSheet.create({
   markPaidText: {
     color: colors.text.inverse,
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   emptyWrap: {
     alignItems: 'center',
     paddingTop: spacing.huge,
   },
-  emptyIcon: { fontSize: 48, marginBottom: spacing.md },
   emptyText: {
     fontSize: fontSize.md,
     color: colors.text.tertiary,

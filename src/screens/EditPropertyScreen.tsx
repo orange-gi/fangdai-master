@@ -9,7 +9,6 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PropertyType, RootStackParamList } from '../types';
@@ -18,12 +17,12 @@ import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProperty'>;
 
-const TYPES: { value: PropertyType; label: string; icon: string }[] = [
-  { value: 'apartment', label: '公寓', icon: '🏢' },
-  { value: 'house', label: '别墅', icon: '🏡' },
-  { value: 'land', label: '土地', icon: '🌍' },
-  { value: 'commercial', label: '商铺', icon: '🏬' },
-  { value: 'other', label: '其他', icon: '📦' },
+const TYPES: { value: PropertyType; label: string }[] = [
+  { value: 'apartment', label: '公寓' },
+  { value: 'house', label: '别墅' },
+  { value: 'land', label: '土地' },
+  { value: 'commercial', label: '商铺' },
+  { value: 'other', label: '其他' },
 ];
 
 export default function EditPropertyScreen({ navigation, route }: Props) {
@@ -63,7 +62,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
     }
   };
 
-  const update = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
@@ -102,7 +101,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={colors.accent.gold} />
+          <ActivityIndicator size="large" color={colors.accent.primary} />
           <Text style={styles.loadingText}>加载中...</Text>
         </View>
       </SafeAreaView>
@@ -111,17 +110,20 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>房产类型</Text>
           <View style={styles.typeGrid}>
-            {TYPES.map(t => (
+            {TYPES.map((t) => (
               <TouchableOpacity
                 key={t.value}
                 style={[styles.typeItem, form.type === t.value && styles.typeActive]}
                 onPress={() => update('type', t.value)}
               >
-                <Text style={styles.typeIcon}>{t.icon}</Text>
                 <Text style={[styles.typeLabel, form.type === t.value && styles.typeLabelActive]}>
                   {t.label}
                 </Text>
@@ -136,7 +138,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
           <TextInput
             style={styles.input}
             value={form.name}
-            onChangeText={v => update('name', v)}
+            onChangeText={(v) => update('name', v)}
             placeholder="例如：洛杉矶公寓"
             placeholderTextColor={colors.text.tertiary}
           />
@@ -144,7 +146,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
           <TextInput
             style={[styles.input, styles.textArea]}
             value={form.address}
-            onChangeText={v => update('address', v)}
+            onChangeText={(v) => update('address', v)}
             placeholder="街道、城市、州、邮编"
             placeholderTextColor={colors.text.tertiary}
             multiline
@@ -154,19 +156,19 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
           <TextInput
             style={styles.input}
             value={form.purchaseDate}
-            onChangeText={v => update('purchaseDate', v)}
+            onChangeText={(v) => update('purchaseDate', v)}
             placeholder="2024-01-01"
             placeholderTextColor={colors.text.tertiary}
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💰 价格信息</Text>
+          <Text style={styles.sectionTitle}>价格信息</Text>
           <Text style={styles.label}>购入价格 (CNY) *</Text>
           <TextInput
             style={styles.input}
             value={form.purchasePrice}
-            onChangeText={v => update('purchasePrice', v)}
+            onChangeText={(v) => update('purchasePrice', v)}
             placeholder="请输入购入价格"
             placeholderTextColor={colors.text.tertiary}
             keyboardType="numeric"
@@ -175,7 +177,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
           <TextInput
             style={styles.input}
             value={form.currentValue}
-            onChangeText={v => update('currentValue', v)}
+            onChangeText={(v) => update('currentValue', v)}
             placeholder="留空则使用购入价格"
             placeholderTextColor={colors.text.tertiary}
             keyboardType="numeric"
@@ -183,13 +185,13 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.submitWrap}>
-          <TouchableOpacity activeOpacity={0.85} onPress={handleSubmit} disabled={saving}>
-            <LinearGradient
-              colors={saving ? ['#9E7B3F', '#8A6A3A'] : ['#E8B86D', '#D4956A']}
-              style={styles.submitBtn}
-            >
-              <Text style={styles.submitText}>{saving ? '保存中...' : '保存修改'}</Text>
-            </LinearGradient>
+          <TouchableOpacity
+            style={[styles.submitBtn, saving && styles.submitBtnDisabled]}
+            activeOpacity={0.8}
+            onPress={handleSubmit}
+            disabled={saving}
+          >
+            <Text style={styles.submitText}>{saving ? '保存中...' : '保存修改'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -200,8 +202,17 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg.primary },
   scroll: { flex: 1 },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  loadingText: { color: colors.text.tertiary, fontSize: fontSize.md, marginTop: spacing.sm },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    color: colors.text.tertiary,
+    fontSize: fontSize.md,
+    marginTop: spacing.sm,
+  },
   section: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
@@ -210,7 +221,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.text.primary,
     marginBottom: spacing.lg,
   },
@@ -225,19 +236,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.card,
   },
   typeActive: {
-    borderColor: colors.accent.gold,
-    backgroundColor: 'rgba(232,184,109,0.08)',
+    borderColor: colors.accent.primary,
+    backgroundColor: colors.accent.primaryLight,
   },
-  typeIcon: { fontSize: 22, marginBottom: 4 },
-  typeLabel: { fontSize: fontSize.xs, color: colors.text.tertiary },
-  typeLabelActive: { color: colors.accent.gold, fontWeight: '600' },
-  label: {
+  typeLabel: {
     fontSize: fontSize.sm,
     color: colors.text.tertiary,
+  },
+  typeLabelActive: {
+    color: colors.accent.primary,
+    fontWeight: '600',
+  },
+  label: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
     marginTop: spacing.md,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
   input: {
     backgroundColor: colors.bg.input,
@@ -252,14 +266,16 @@ const styles = StyleSheet.create({
   textArea: { height: 80, textAlignVertical: 'top' },
   submitWrap: { padding: spacing.xl, paddingBottom: spacing.huge },
   submitBtn: {
+    backgroundColor: colors.accent.primary,
     paddingVertical: 16,
     borderRadius: radius.lg,
     alignItems: 'center',
-    ...shadow.elevated,
+    ...shadow.card,
   },
+  submitBtnDisabled: { opacity: 0.6 },
   submitText: {
-    color: colors.bg.primary,
+    color: colors.text.inverse,
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
