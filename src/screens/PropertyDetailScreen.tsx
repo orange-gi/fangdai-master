@@ -12,8 +12,23 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Property, TaxRecord, RootStackParamList } from '../types';
 import { propertyService } from '../services/property';
 import { taxService } from '../services/tax';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PropertyDetail'>;
+
+const TYPE_MAP: Record<string, string> = {
+  apartment: '公寓',
+  house: '别墅',
+  land: '土地',
+  commercial: '商铺',
+  other: '其他',
+};
+
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: '待缴纳', color: colors.status.pending, bg: colors.status.pendingBg },
+  paid: { label: '已缴纳', color: colors.status.paid, bg: colors.status.paidBg },
+  overdue: { label: '逾期', color: colors.status.overdue, bg: colors.status.overdueBg },
+};
 
 export default function PropertyDetailScreen({ navigation, route }: Props) {
   const { propertyId } = route.params;
@@ -27,172 +42,117 @@ export default function PropertyDetailScreen({ navigation, route }: Props) {
 
   const loadData = async () => {
     try {
-      const [propData, taxData] = await Promise.all([
+      const [p, t] = await Promise.all([
         propertyService.get(propertyId),
         taxService.getByProperty(propertyId),
       ]);
-      setProperty(propData);
-      setTaxRecords(taxData);
-    } catch (error) {
-      console.error('加载数据失败:', error);
+      setProperty(p);
+      setTaxRecords(t);
+    } catch {
+      /* ignore */
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      '确认删除',
-      '确定要删除这套房产吗？此操作不可恢复。',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '删除',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await propertyService.delete(propertyId);
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert('删除失败', '请稍后重试');
-            }
-          },
+    Alert.alert('确认删除', '此操作不可恢复', [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: async () => {
+          await propertyService.delete(propertyId);
+          navigation.goBack();
         },
-      ]
-    );
-  };
-
-  const getPropertyTypeName = (type: string) => {
-    const typeMap: Record<string, string> = {
-      apartment: '公寓',
-      house: '别墅',
-      land: '土地',
-      commercial: '商业地产',
-      other: '其他',
-    };
-    return typeMap[type] || type;
-  };
-
-  const getTaxStatusName = (status: string) => {
-    const statusMap: Record<string, string> = {
-      pending: '待缴纳',
-      paid: '已缴纳',
-      overdue: '逾期',
-    };
-    return statusMap[status] || status;
-  };
-
-  const getTaxStatusColor = (status: string) => {
-    const colorMap: Record<string, string> = {
-      pending: '#ff9800',
-      paid: '#4caf50',
-      overdue: '#f44336',
-    };
-    return colorMap[status] || '#999';
+      },
+    ]);
   };
 
   if (loading || !property) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text>加载中...</Text>
+        <View style={styles.loadingWrap}>
+          <Text style={styles.loadingText}>加载中...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   const gain = property.currentValue - property.purchasePrice;
-  const gainPercent = ((gain / property.purchasePrice) * 100).toFixed(1);
+  const gainPct = ((gain / property.purchasePrice) * 100).toFixed(1);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView}>
-        {/* 房产基本信息 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{property.name}</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.headerSection}>
+          <View style={styles.titleRow}>
+            <Text style={styles.propName}>{property.name}</Text>
             <View style={styles.typeTag}>
-              <Text style={styles.typeTagText}>{getPropertyTypeName(property.type)}</Text>
+              <Text style={styles.typeText}>{TYPE_MAP[property.type] || property.type}</Text>
             </View>
           </View>
-          
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>地址</Text>
-            <Text style={styles.infoValue}>{property.address}</Text>
+          <Text style={styles.address}>{property.address}</Text>
+          <Text style={styles.date}>购入于 {property.purchaseDate}</Text>
+        </View>
+
+        <View style={styles.valueSection}>
+          <View style={styles.valueRow}>
+            <View style={styles.valueCard}>
+              <Text style={styles.valueLabel}>购入价格</Text>
+              <Text style={styles.valueAmount}>¥{property.purchasePrice.toLocaleString()}</Text>
+            </View>
+            <View style={styles.valueCard}>
+              <Text style={styles.valueLabel}>当前估值</Text>
+              <Text style={styles.valueAmountAccent}>¥{property.currentValue.toLocaleString()}</Text>
+            </View>
           </View>
-          
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>购入日期</Text>
-            <Text style={styles.infoValue}>{property.purchaseDate}</Text>
+          <View style={styles.gainCard}>
+            <Text style={styles.gainLabel}>账面收益</Text>
+            <Text style={[styles.gainValue, { color: gain >= 0 ? colors.accent.primary : colors.accent.coral }]}>
+              {gain >= 0 ? '+' : ''}¥{gain.toLocaleString()} ({gainPct}%)
+            </Text>
           </View>
         </View>
 
-        {/* 价值信息 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💰 价值信息</Text>
-          
-          <View style={styles.priceCard}>
-            <View style={styles.priceItem}>
-              <Text style={styles.priceLabel}>购入价格</Text>
-              <Text style={styles.priceValue}>¥{property.purchasePrice.toLocaleString()}</Text>
-            </View>
-            
-            <View style={styles.priceItem}>
-              <Text style={styles.priceLabel}>当前估值</Text>
-              <Text style={[styles.priceValue, styles.currentValue]}>
-                ¥{property.currentValue.toLocaleString()}
-              </Text>
-            </View>
-            
-            <View style={styles.priceItem}>
-              <Text style={styles.priceLabel}>账面收益</Text>
-              <Text style={[styles.priceValue, gain >= 0 ? styles.positive : styles.negative]}>
-                {gain >= 0 ? '+' : ''}¥{gain.toLocaleString()} ({gainPercent}%)
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 税务记录 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📋 税务记录</Text>
+            <Text style={styles.sectionTitle}>税务记录</Text>
             <TouchableOpacity onPress={() => navigation.navigate('TaxCenter')}>
               <Text style={styles.linkText}>查看全部</Text>
             </TouchableOpacity>
           </View>
-          
           {taxRecords.length > 0 ? (
-            taxRecords.slice(0, 3).map((record) => (
-              <View key={record.id} style={styles.taxCard}>
-                <View style={styles.taxHeader}>
-                  <Text style={styles.taxYear}>{record.year}年</Text>
-                  <View style={[styles.statusTag, { backgroundColor: getTaxStatusColor(record.status) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getTaxStatusColor(record.status) }]}>
-                      {getTaxStatusName(record.status)}
-                    </Text>
+            taxRecords.slice(0, 3).map((r) => {
+              const s = STATUS_MAP[r.status] || STATUS_MAP.pending;
+              return (
+                <View key={r.id} style={styles.taxCard}>
+                  <View style={styles.taxRow}>
+                    <Text style={styles.taxYear}>{r.year}年</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: s.bg }]}>
+                      <Text style={[styles.statusText, { color: s.color }]}>{s.label}</Text>
+                    </View>
                   </View>
+                  <Text style={styles.taxAmount}>¥{r.amount.toLocaleString()}</Text>
+                  <Text style={styles.taxDue}>截止 {r.dueDate}</Text>
                 </View>
-                <Text style={styles.taxAmount}>¥{record.amount.toLocaleString()}</Text>
-                <Text style={styles.taxDueDate}>截止日期: {record.dueDate}</Text>
-              </View>
-            ))
+              );
+            })
           ) : (
-            <Text style={styles.emptyText}>暂无税务记录</Text>
+            <Text style={styles.emptyHint}>暂无税务记录</Text>
           )}
         </View>
 
-        {/* 操作按钮 */}
-        <View style={styles.section}>
+        <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.editButton}
+            style={styles.editBtn}
+            activeOpacity={0.8}
             onPress={() => navigation.navigate('EditProperty', { propertyId })}
           >
-            <Text style={styles.editButtonText}>编辑房产信息</Text>
+            <Text style={styles.editBtnText}>编辑房产信息</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>删除房产</Text>
+          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+            <Text style={styles.deleteBtnText}>删除房产</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -201,152 +161,173 @@ export default function PropertyDetailScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  container: { flex: 1, backgroundColor: colors.bg.primary },
+  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: colors.text.tertiary, fontSize: fontSize.md },
+  headerSection: {
+    padding: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.subtle,
   },
-  loadingContainer: {
-    flex: 1,
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: spacing.sm,
   },
-  scrollView: {
+  propName: {
+    fontSize: fontSize.xxl,
+    fontWeight: '700',
+    color: colors.text.primary,
     flex: 1,
+  },
+  typeTag: {
+    backgroundColor: colors.accent.primaryLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  typeText: {
+    fontSize: fontSize.xs,
+    color: colors.accent.primary,
+    fontWeight: '500',
+  },
+  address: {
+    fontSize: fontSize.md,
+    color: colors.text.secondary,
+    marginBottom: 4,
+  },
+  date: { fontSize: fontSize.sm, color: colors.text.tertiary },
+  valueSection: { padding: spacing.xl },
+  valueRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  valueCard: {
+    flex: 1,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
+  },
+  valueLabel: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+    marginBottom: spacing.sm,
+  },
+  valueAmount: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  valueAmountAccent: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    color: colors.accent.primary,
+  },
+  gainCard: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
+  },
+  gainLabel: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+    marginBottom: spacing.sm,
+  },
+  gainValue: {
+    fontSize: fontSize.xxl,
+    fontWeight: '700',
   },
   section: {
-    backgroundColor: '#fff',
-    marginBottom: 12,
-    padding: 16,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#333',
-  },
-  typeTag: {
-    backgroundColor: '#e8f5e9',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  typeTagText: {
-    color: '#2e7d32',
-    fontSize: 12,
-  },
-  infoRow: {
-    marginBottom: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#333',
-  },
-  priceCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  priceItem: {
-    flex: 1,
-  },
-  priceLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  currentValue: {
-    color: '#2e7d32',
-  },
-  positive: {
-    color: '#2e7d32',
-  },
-  negative: {
-    color: '#f44336',
+    color: colors.text.primary,
   },
   linkText: {
-    color: '#2e7d32',
-    fontSize: 14,
+    fontSize: fontSize.sm,
+    color: colors.accent.primary,
+    fontWeight: '500',
   },
   taxCard: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
   },
-  taxHeader: {
+  taxRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   taxYear: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  statusTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  taxAmount: {
-    fontSize: 20,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text.primary,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  statusText: { fontSize: fontSize.xs, fontWeight: '600' },
+  taxAmount: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: 4,
   },
-  taxDueDate: {
-    fontSize: 12,
-    color: '#999',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#999',
+  taxDue: { fontSize: fontSize.xs, color: colors.text.tertiary },
+  emptyHint: {
+    fontSize: fontSize.md,
+    color: colors.text.tertiary,
     textAlign: 'center',
-    paddingVertical: 20,
+    paddingVertical: spacing.xxl,
   },
-  editButton: {
-    backgroundColor: '#2e7d32',
-    paddingVertical: 14,
-    borderRadius: 8,
+  actions: { padding: spacing.xl, paddingBottom: spacing.huge },
+  editBtn: {
+    backgroundColor: colors.accent.primary,
+    paddingVertical: 16,
+    borderRadius: radius.lg,
     alignItems: 'center',
-    marginBottom: 12,
+    ...shadow.card,
   },
-  editButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+  editBtnText: {
+    color: colors.text.inverse,
+    fontSize: fontSize.lg,
+    fontWeight: '600',
   },
-  deleteButton: {
-    backgroundColor: '#fff',
+  deleteBtn: {
+    marginTop: spacing.md,
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#f44336',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderColor: colors.accent.coralLight,
   },
-  deleteButtonText: {
-    color: '#f44336',
-    fontSize: 16,
+  deleteBtnText: {
+    color: colors.accent.coral,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
 });

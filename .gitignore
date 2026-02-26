@@ -32,3 +32,4 @@ web-build/
 # Misc
 .DS_Store
 *.log
+dist/

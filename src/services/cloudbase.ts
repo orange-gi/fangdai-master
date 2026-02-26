@@ -1,31 +1,14 @@
-// CloudBase 服务封装
-import cloud from '@cloudbase/adaptor';
+// CloudBase 服务封装 - Mock Implementation for Development
+// TODO: Replace with actual @cloudbase/adaptor in production
 
-const app = cloud.init({
-  env: 'your-env-id', // 需要在生产环境配置
-});
-
-// 通用请求方法
+// Mock implementation for development
 async function callFunction(name: string, data: Record<string, unknown>) {
-  try {
-    const result = await app.callFunction({
-      name,
-      data,
-    });
-    
-    if (result.result && typeof result.result === 'object') {
-      const res = result.result as { code: number; message?: string; data?: unknown };
-      if (res.code === 0) {
-        return res.data;
-      }
-      throw new Error(res.message || '请求失败');
-    }
-    
-    return result.result;
-  } catch (error) {
-    console.error(`调用云函数 ${name} 失败:`, error);
-    throw error;
-  }
+  // Return mock data based on function name
+  console.log(`Mock cloud function called: ${name}`, data);
+  
+  // For now, return empty data to allow app to load
+  // Each service file has its own mock data fallbacks
+  throw new Error('Cloud function not available in development mode');
 }
 
 export { callFunction };

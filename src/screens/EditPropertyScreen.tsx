@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -14,7 +15,7 @@ import { PropertyType, RootStackParamList } from '../types';
 import { propertyService } from '../services/property';
 import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AddProperty'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'EditProperty'>;
 
 const TYPES: { value: PropertyType; label: string }[] = [
   { value: 'apartment', label: '公寓' },
@@ -24,8 +25,10 @@ const TYPES: { value: PropertyType; label: string }[] = [
   { value: 'other', label: '其他' },
 ];
 
-export default function AddPropertyScreen({ navigation }: Props) {
-  const [loading, setLoading] = useState(false);
+export default function EditPropertyScreen({ navigation, route }: Props) {
+  const { propertyId } = route.params;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: '',
     address: '',
@@ -34,6 +37,31 @@ export default function AddPropertyScreen({ navigation }: Props) {
     purchasePrice: '',
     currentValue: '',
   });
+
+  useEffect(() => {
+    loadProperty();
+  }, [propertyId]);
+
+  const loadProperty = async () => {
+    try {
+      const prop = await propertyService.get(propertyId);
+      if (prop) {
+        setForm({
+          name: prop.name,
+          address: prop.address,
+          type: prop.type,
+          purchaseDate: prop.purchaseDate,
+          purchasePrice: prop.purchasePrice.toString(),
+          currentValue: prop.currentValue.toString(),
+        });
+      }
+    } catch {
+      Alert.alert('错误', '加载房产信息失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSubmit = async () => {
@@ -49,23 +77,36 @@ export default function AddPropertyScreen({ navigation }: Props) {
       Alert.alert('提示', '请输入购入价格');
       return;
     }
-    setLoading(true);
+    setSaving(true);
     try {
-      await propertyService.add({
+      await propertyService.update(propertyId, {
         name: form.name,
         address: form.address,
         type: form.type,
-        purchaseDate: form.purchaseDate || new Date().toISOString().split('T')[0],
-        purchasePrice: parseFloat(form.purchasePrice),
-        currentValue: parseFloat(form.currentValue) || parseFloat(form.purchasePrice),
+        purchaseDate: form.purchaseDate,
+        purchasePrice: parseFloat(form.purchasePrice) || 0,
+        currentValue: parseFloat(form.currentValue) || parseFloat(form.purchasePrice) || 0,
       });
-      Alert.alert('成功', '房产添加成功', [{ text: '确定', onPress: () => navigation.goBack() }]);
+      Alert.alert('成功', '房产信息已更新', [
+        { text: '确定', onPress: () => navigation.goBack() },
+      ]);
     } catch {
-      Alert.alert('失败', '请稍后重试');
+      Alert.alert('失败', '更新失败，请稍后重试');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={colors.accent.primary} />
+          <Text style={styles.loadingText}>加载中...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -145,12 +186,12 @@ export default function AddPropertyScreen({ navigation }: Props) {
 
         <View style={styles.submitWrap}>
           <TouchableOpacity
-            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+            style={[styles.submitBtn, saving && styles.submitBtnDisabled]}
             activeOpacity={0.8}
             onPress={handleSubmit}
-            disabled={loading}
+            disabled={saving}
           >
-            <Text style={styles.submitText}>{loading ? '保存中...' : '保存房产'}</Text>
+            <Text style={styles.submitText}>{saving ? '保存中...' : '保存修改'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -161,6 +202,17 @@ export default function AddPropertyScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg.primary },
   scroll: { flex: 1 },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    color: colors.text.tertiary,
+    fontSize: fontSize.md,
+    marginTop: spacing.sm,
+  },
   section: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
