@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Property, RootStackParamList } from '../types';
 import { propertyService } from '../services/property';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PropertyList'>;
 
@@ -19,73 +14,53 @@ export default function PropertyListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadProperties();
-  }, []);
+  useEffect(() => { loadProperties(); }, []);
 
   const loadProperties = async () => {
-    try {
-      const result = await propertyService.getList();
-      setProperties(result);
-    } catch (error) {
-      console.error('加载房产失败:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    try { setProperties(await propertyService.getList()); }
+    catch { /* ignore */ }
+    finally { setLoading(false); setRefreshing(false); }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadProperties();
+  const typeMap: Record<string, string> = { apartment: '公寓', house: '别墅', land: '土地', commercial: '商铺', other: '其他' };
+
+  const renderProperty = ({ item, index }: { item: Property; index: number }) => {
+    const gain = item.currentValue - item.purchasePrice;
+    const gainPct = ((gain / item.purchasePrice) * 100).toFixed(1);
+    return (
+      <TouchableOpacity
+        style={[styles.card, index === 0 && styles.cardFirst]}
+        onPress={() => navigation.navigate('PropertyDetail', { propertyId: item.id })}
+        activeOpacity={0.85}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.cardTitleRow}>
+            <Text style={styles.cardName}>{item.name}</Text>
+            <View style={styles.typeTag}>
+              <Text style={styles.typeText}>{typeMap[item.type] || item.type}</Text>
+            </View>
+          </View>
+          <Text style={styles.cardAddress}>{item.address}</Text>
+        </View>
+        <View style={styles.cardDivider} />
+        <View style={styles.cardFooter}>
+          <View style={styles.priceCol}>
+            <Text style={styles.priceLabel}>购入价格</Text>
+            <Text style={styles.priceValue}>¥{item.purchasePrice.toLocaleString()}</Text>
+          </View>
+          <View style={styles.priceCol}>
+            <Text style={styles.priceLabel}>当前估值</Text>
+            <Text style={styles.priceValueGold}>¥{item.currentValue.toLocaleString()}</Text>
+          </View>
+          <View style={[styles.gainBadge, gain >= 0 ? styles.gainPositive : styles.gainNegative]}>
+            <Text style={[styles.gainText, gain >= 0 ? styles.gainTextPositive : styles.gainTextNegative]}>
+              {gain >= 0 ? '+' : ''}{gainPct}%
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
   };
-
-  const getPropertyTypeName = (type: string) => {
-    const typeMap: Record<string, string> = {
-      apartment: '公寓',
-      house: '别墅',
-      land: '土地',
-      commercial: '商业地产',
-      other: '其他',
-    };
-    return typeMap[type] || type;
-  };
-
-  const renderProperty = ({ item }: { item: Property }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('PropertyDetail', { propertyId: item.id })}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.propertyName}>{item.name}</Text>
-        <View style={styles.typeTag}>
-          <Text style={styles.typeTagText}>{getPropertyTypeName(item.type)}</Text>
-        </View>
-      </View>
-      
-      <Text style={styles.address} numberOfLines={2}>{item.address}</Text>
-      
-      <View style={styles.cardFooter}>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>购入价格</Text>
-          <Text style={styles.priceValue}>¥{item.purchasePrice.toLocaleString()}</Text>
-        </View>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>当前估值</Text>
-          <Text style={[styles.priceValue, styles.currentValue]}>
-            ¥{item.currentValue.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>暂无房产</Text>
-      <Text style={styles.emptySubtext}>点击下方按钮添加您的第一套房产</Text>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -94,119 +69,52 @@ export default function PropertyListScreen({ navigation }: Props) {
         keyExtractor={(item) => item.id}
         renderItem={renderProperty}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={!loading ? renderEmpty : null}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        ListEmptyComponent={!loading ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyIcon}>🏠</Text>
+            <Text style={styles.emptyText}>暂无房产</Text>
+            <Text style={styles.emptySubtext}>添加您的第一套海外房产</Text>
+          </View>
+        ) : null}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadProperties(); }} tintColor={colors.accent.gold} />}
       />
-      
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate('AddProperty')}
-      >
-        <Text style={styles.addButtonText}>+ 添加房产</Text>
+      <TouchableOpacity style={styles.addBtnWrap} activeOpacity={0.9} onPress={() => navigation.navigate('AddProperty')}>
+        <LinearGradient colors={['#E8B86D', '#D4956A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addBtn}>
+          <Text style={styles.addBtnText}>+ 添加房产</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  propertyName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-  },
-  typeTag: {
-    backgroundColor: '#e8f5e9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  typeTagText: {
-    color: '#2e7d32',
-    fontSize: 12,
-  },
-  address: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingTop: 12,
-  },
-  priceItem: {
-    flex: 1,
-  },
-  priceLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  currentValue: {
-    color: '#2e7d32',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#999',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#ccc',
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: 24,
-    left: 24,
-    right: 24,
-    backgroundColor: '#2e7d32',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: colors.bg.primary },
+  list: { padding: spacing.xl, paddingBottom: 100 },
+  card: { backgroundColor: colors.bg.card, borderRadius: radius.xl, padding: spacing.xl, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.border.subtle, ...shadow.card },
+  cardFirst: { borderColor: colors.border.accent },
+  cardHeader: { marginBottom: spacing.md },
+  cardTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+  cardName: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text.primary, flex: 1 },
+  typeTag: { backgroundColor: colors.status.pendingBg, paddingHorizontal: spacing.md, paddingVertical: 3, borderRadius: radius.full },
+  typeText: { fontSize: fontSize.xs, color: colors.accent.gold, fontWeight: '600' },
+  cardAddress: { fontSize: fontSize.sm, color: colors.text.tertiary },
+  cardDivider: { height: 1, backgroundColor: colors.border.subtle, marginVertical: spacing.md },
+  cardFooter: { flexDirection: 'row', alignItems: 'flex-end' },
+  priceCol: { flex: 1 },
+  priceLabel: { fontSize: fontSize.xs, color: colors.text.tertiary, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.8 },
+  priceValue: { fontSize: fontSize.md, fontWeight: '600', color: colors.text.secondary },
+  priceValueGold: { fontSize: fontSize.md, fontWeight: '700', color: colors.accent.gold },
+  gainBadge: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.sm },
+  gainPositive: { backgroundColor: colors.status.paidBg },
+  gainNegative: { backgroundColor: colors.status.overdueBg },
+  gainText: { fontSize: fontSize.sm, fontWeight: '700' },
+  gainTextPositive: { color: colors.accent.jade },
+  gainTextNegative: { color: colors.accent.coral },
+  empty: { alignItems: 'center', paddingTop: 100 },
+  emptyIcon: { fontSize: 56, marginBottom: spacing.lg },
+  emptyText: { fontSize: fontSize.xl, color: colors.text.secondary, fontWeight: '600' },
+  emptySubtext: { fontSize: fontSize.sm, color: colors.text.tertiary, marginTop: spacing.sm },
+  addBtnWrap: { position: 'absolute', bottom: 24, left: spacing.xl, right: spacing.xl },
+  addBtn: { paddingVertical: 16, borderRadius: radius.lg, alignItems: 'center', ...shadow.elevated },
+  addBtnText: { color: colors.bg.primary, fontSize: fontSize.lg, fontWeight: '700', letterSpacing: 0.5 },
 });
