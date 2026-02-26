@@ -1,12 +1,18 @@
-// 主页屏幕
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
+import { propertyService } from '../services/property';
 
-interface HomeScreenProps {
-  navigation: any;
-}
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
-export default function HomeScreen({ navigation }: HomeScreenProps) {
+export default function HomeScreen({ navigation }: Props) {
+  const [stats, setStats] = useState({ count: 0, totalValue: 0, totalGain: 0 });
+
+  useEffect(() => {
+    propertyService.getStats().then(setStats).catch(() => {});
+  }, []);
+
   const features = [
     {
       id: 'tax',
@@ -14,6 +20,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       subtitle: '专业税务方案咨询',
       icon: '💰',
       color: '#4CAF50',
+      screen: 'TaxCenter' as const,
     },
     {
       id: 'property',
@@ -21,6 +28,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       subtitle: '多房产统一管理',
       icon: '🏠',
       color: '#2196F3',
+      screen: 'PropertyList' as const,
     },
     {
       id: 'document',
@@ -28,6 +36,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       subtitle: '房产证件数字化',
       icon: '📄',
       color: '#FF9800',
+      screen: 'DocumentList' as const,
     },
     {
       id: 'policy',
@@ -35,14 +44,46 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       subtitle: '最新政策推送',
       icon: '📚',
       color: '#9C27B0',
+      screen: 'PolicyList' as const,
     },
   ];
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>房产大师</Text>
-        <Text style={styles.subtitle}>您的海外房产税务助手</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.title}>房产大师</Text>
+            <Text style={styles.subtitle}>您的海外房产税务助手</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={styles.profileIcon}>👤</Text>
+          </TouchableOpacity>
+        </View>
+
+        {stats.count > 0 && (
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{stats.count}</Text>
+              <Text style={styles.statLabel}>房产数量</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>¥{(stats.totalValue / 10000).toFixed(0)}万</Text>
+              <Text style={styles.statLabel}>总资产</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, stats.totalGain >= 0 ? styles.positive : styles.negative]}>
+                {stats.totalGain >= 0 ? '+' : ''}¥{(stats.totalGain / 10000).toFixed(0)}万
+              </Text>
+              <Text style={styles.statLabel}>总收益</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       <View style={styles.features}>
@@ -50,7 +91,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <TouchableOpacity
             key={feature.id}
             style={styles.featureCard}
-            onPress={() => {}}
+            onPress={() => navigation.navigate(feature.screen)}
           >
             <Text style={styles.featureIcon}>{feature.icon}</Text>
             <Text style={styles.featureTitle}>{feature.title}</Text>
@@ -60,7 +101,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       </View>
 
       <View style={styles.aiSection}>
-        <TouchableOpacity style={styles.aiButton}>
+        <TouchableOpacity
+          style={styles.aiButton}
+          onPress={() => navigation.navigate('Chat', {})}
+        >
           <Text style={styles.aiIcon}>🤖</Text>
           <Text style={styles.aiText}>咨询 AI 助手</Text>
         </TouchableOpacity>
@@ -78,6 +122,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -87,6 +136,49 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileIcon: {
+    fontSize: 22,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 4,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  positive: {
+    color: '#2e7d32',
+  },
+  negative: {
+    color: '#f44336',
   },
   features: {
     flexDirection: 'row',
