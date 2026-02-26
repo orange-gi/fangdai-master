@@ -22,19 +22,19 @@ import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const screenOptions = {
-  headerStyle: { backgroundColor: '#0E1225' },
-  headerTintColor: '#F0EDE6',
-  headerTitleStyle: { fontWeight: '600' as const, fontSize: 17, letterSpacing: 0.3 },
-  headerShadowVisible: false,
-  contentStyle: { backgroundColor: '#080C18' },
-};
-
 export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={screenOptions}>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: { backgroundColor: '#F6F5F2' },
+            headerTintColor: '#1A1D21',
+            headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: '#F6F5F2' },
+          }}
+        >
           <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="PropertyList" component={PropertyListScreen} options={{ title: '房产管理' }} />
           <Stack.Screen name="PropertyDetail" component={PropertyDetailScreen} options={{ title: '房产详情' }} />
@@ -42,7 +42,7 @@ export default function App() {
           <Stack.Screen name="EditProperty" component={EditPropertyScreen} options={{ title: '编辑房产' }} />
           <Stack.Screen name="TaxCenter" component={TaxCenterScreen} options={{ title: '税务中心' }} />
           <Stack.Screen name="TaxDetail" component={TaxDetailScreen} options={{ title: '税务详情' }} />
-          <Stack.Screen name="TaxConsultation" component={TaxConsultationScreen} options={{ title: 'AI 税务咨询' }} />
+          <Stack.Screen name="TaxConsultation" component={TaxConsultationScreen} options={{ title: '税务咨询' }} />
           <Stack.Screen name="DocumentList" component={DocumentListScreen} options={{ title: '证件管理' }} />
           <Stack.Screen name="DocumentDetail" component={DocumentDetailScreen} options={{ title: '证件详情' }} />
           <Stack.Screen name="AddDocument" component={AddDocumentScreen} options={{ title: '添加证件' }} />
@@ -52,7 +52,7 @@ export default function App() {
           <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: '我的' }} />
         </Stack.Navigator>
       </NavigationContainer>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }
