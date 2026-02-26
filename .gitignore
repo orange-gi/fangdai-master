@@ -1,0 +1,34 @@
+# iOS
+ios/
+*.xcuserstate
+*.pbxproj
+*.xcworkspace
+*.xcuserdatad
+*.moved-aside
+DerivedData/
+build/
+*.hmap
+*.ipa
+
+# Android
+android/
+*.iml
+.gradle/
+local.properties
+.cxx/
+*.apk
+*.aab
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Expo
+.expo/
+.expo-shared/
+web-build/
+
+# Misc
+.DS_Store
+*.log
