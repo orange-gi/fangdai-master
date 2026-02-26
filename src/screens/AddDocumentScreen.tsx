@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { DocumentType, RootStackParamList } from '../types';
 import { documentService } from '../services/document';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddDocument'>;
 
@@ -62,18 +64,31 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>证件类型</Text>
           <View style={styles.typeGrid}>
             {DOC_TYPES.map((t) => (
               <TouchableOpacity
                 key={t.value}
-                style={[styles.typeItem, form.type === t.value && styles.typeItemActive]}
+                style={[
+                  styles.typeItem,
+                  form.type === t.value && styles.typeItemActive,
+                ]}
                 onPress={() => updateForm('type', t.value)}
+                activeOpacity={0.8}
               >
                 <Text style={styles.typeIcon}>{t.icon}</Text>
-                <Text style={[styles.typeLabel, form.type === t.value && styles.typeLabelActive]}>
+                <Text
+                  style={[
+                    styles.typeLabel,
+                    form.type === t.value && styles.typeLabelActive,
+                  ]}
+                >
                   {t.label}
                 </Text>
               </TouchableOpacity>
@@ -83,6 +98,7 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>证件信息</Text>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>证件名称 *</Text>
             <TextInput
@@ -90,9 +106,10 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
               value={form.name}
               onChangeText={(v) => updateForm('name', v)}
               placeholder="例如：洛杉矶公寓房产证"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={colors.text.tertiary}
             />
           </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>证件编号</Text>
             <TextInput
@@ -100,9 +117,10 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
               value={form.number}
               onChangeText={(v) => updateForm('number', v)}
               placeholder="证件编号（选填）"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={colors.text.tertiary}
             />
           </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>签发日期</Text>
             <TextInput
@@ -110,9 +128,10 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
               value={form.issueDate}
               onChangeText={(v) => updateForm('issueDate', v)}
               placeholder="格式：2024-01-01"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={colors.text.tertiary}
             />
           </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>到期日期</Text>
             <TextInput
@@ -120,19 +139,27 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
               value={form.expiryDate}
               onChangeText={(v) => updateForm('expiryDate', v)}
               placeholder="格式：2030-01-01（选填）"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={colors.text.tertiary}
             />
           </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          style={styles.submitBtnWrap}
           onPress={handleSubmit}
           disabled={loading}
+          activeOpacity={0.9}
         >
-          <Text style={styles.submitButtonText}>
-            {loading ? '保存中...' : '保存证件'}
-          </Text>
+          <LinearGradient
+            colors={loading ? ['#6B5CA5', '#5A4B90'] : ['#9B7CE8', '#8060C8']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.submitBtn}
+          >
+            <Text style={styles.submitBtnText}>
+              {loading ? '保存中...' : '保存证件'}
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -140,30 +167,97 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  scrollView: { flex: 1 },
-  section: { backgroundColor: '#fff', marginBottom: 12, padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 },
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg.primary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing.huge,
+  },
+  section: {
+    backgroundColor: colors.bg.card,
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.xl,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
+  },
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: spacing.lg,
+  },
+  typeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
   typeItem: {
-    width: '23%', alignItems: 'center', paddingVertical: 12, borderRadius: 12,
-    borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#fafafa',
+    width: '23%',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    backgroundColor: colors.bg.secondary,
   },
-  typeItemActive: { borderColor: '#ff9800', backgroundColor: '#fff3e0' },
-  typeIcon: { fontSize: 24, marginBottom: 4 },
-  typeLabel: { fontSize: 12, color: '#666' },
-  typeLabelActive: { color: '#ff9800', fontWeight: '600' },
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 14, color: '#666', marginBottom: 8 },
+  typeItemActive: {
+    borderColor: colors.accent.violet,
+    backgroundColor: 'rgba(155,124,232,0.10)',
+  },
+  typeIcon: {
+    fontSize: 24,
+    marginBottom: spacing.xs,
+  },
+  typeLabel: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+  },
+  typeLabelActive: {
+    color: colors.accent.violet,
+    fontWeight: '600',
+  },
+  inputGroup: {
+    marginBottom: spacing.lg,
+  },
+  label: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    marginBottom: spacing.sm,
+    fontWeight: '500',
+  },
   input: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 12, fontSize: 16,
-    color: '#333', backgroundColor: '#fafafa',
+    backgroundColor: colors.bg.input,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    fontSize: fontSize.md,
+    color: colors.text.primary,
   },
-  submitButton: {
-    backgroundColor: '#ff9800', marginHorizontal: 16, marginVertical: 24,
-    paddingVertical: 16, borderRadius: 12, alignItems: 'center',
+  submitBtnWrap: {
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.xxl,
   },
-  submitButtonDisabled: { backgroundColor: '#ffe0b2' },
-  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  submitBtn: {
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    ...shadow.elevated,
+  },
+  submitBtnText: {
+    color: colors.text.primary,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });

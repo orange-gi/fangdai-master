@@ -2,22 +2,24 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Document, RootStackParamList } from '../types';
 import { documentService } from '../services/document';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DocumentList'>;
 
-const DOC_TYPE_MAP: Record<string, { name: string; icon: string }> = {
-  deed: { name: '房产证', icon: '🏠' },
-  contract: { name: '购房合同', icon: '📝' },
-  id: { name: '身份证', icon: '🪪' },
-  passport: { name: '护照', icon: '📕' },
-  visa: { name: '签证', icon: '✈️' },
-  tax: { name: '税单', icon: '💰' },
-  insurance: { name: '保险', icon: '🛡️' },
-  other: { name: '其他', icon: '📎' },
+const DOC_TYPE_MAP: Record<string, { icon: string; name: string }> = {
+  deed: { icon: '🏠', name: '房产证' },
+  contract: { icon: '📝', name: '购房合同' },
+  id: { icon: '🪪', name: '身份证' },
+  passport: { icon: '📕', name: '护照' },
+  visa: { icon: '✈️', name: '签证' },
+  tax: { icon: '💰', name: '税单' },
+  insurance: { icon: '🛡️', name: '保险' },
+  other: { icon: '📎', name: '其他' },
 };
 
 export default function DocumentListScreen({ navigation }: Props) {
@@ -46,7 +48,12 @@ export default function DocumentListScreen({ navigation }: Props) {
     loadDocuments();
   };
 
-  const isExpiringSoon = (expiryDate?: string) => {
+  const isExpired = (expiryDate?: string): boolean => {
+    if (!expiryDate) return false;
+    return new Date(expiryDate) < new Date();
+  };
+
+  const isExpiringSoon = (expiryDate?: string): boolean => {
     if (!expiryDate) return false;
     const expiry = new Date(expiryDate);
     const now = new Date();
@@ -54,40 +61,40 @@ export default function DocumentListScreen({ navigation }: Props) {
     return days >= 0 && days <= 90;
   };
 
-  const isExpired = (expiryDate?: string) => {
-    if (!expiryDate) return false;
-    return new Date(expiryDate) < new Date();
-  };
-
   const renderDocument = ({ item }: { item: Document }) => {
     const typeInfo = DOC_TYPE_MAP[item.type] || DOC_TYPE_MAP.other;
     const expired = isExpired(item.expiryDate);
-    const expiringSoon = isExpiringSoon(item.expiryDate);
+    const expiringSoon = !expired && isExpiringSoon(item.expiryDate);
 
     return (
       <TouchableOpacity
         style={styles.card}
         onPress={() => navigation.navigate('DocumentDetail', { documentId: item.id })}
+        activeOpacity={0.85}
       >
-        <View style={styles.cardLeft}>
-          <Text style={styles.docIcon}>{typeInfo.icon}</Text>
-        </View>
-        <View style={styles.cardCenter}>
-          <Text style={styles.docName} numberOfLines={1}>{item.name}</Text>
-          <Text style={styles.docType}>{typeInfo.name}</Text>
-          {item.number && <Text style={styles.docNumber}>编号: {item.number}</Text>}
-        </View>
-        <View style={styles.cardRight}>
-          {expired && (
-            <View style={[styles.badge, styles.expiredBadge]}>
-              <Text style={styles.expiredText}>已过期</Text>
+        <View style={styles.cardRow}>
+          <View style={styles.iconContainer}>
+            <Text style={styles.docIcon}>{typeInfo.icon}</Text>
+          </View>
+          <View style={styles.cardContent}>
+            <View style={styles.cardTitleRow}>
+              <Text style={styles.docName} numberOfLines={1}>{item.name}</Text>
+              {expired && (
+                <View style={styles.expiredBadge}>
+                  <Text style={styles.expiredBadgeText}>已过期</Text>
+                </View>
+              )}
+              {expiringSoon && (
+                <View style={styles.warningBadge}>
+                  <Text style={styles.warningBadgeText}>即将到期</Text>
+                </View>
+              )}
             </View>
-          )}
-          {expiringSoon && !expired && (
-            <View style={[styles.badge, styles.warningBadge]}>
-              <Text style={styles.warningText}>即将到期</Text>
-            </View>
-          )}
+            <Text style={styles.docType}>{typeInfo.name}</Text>
+            {item.number && (
+              <Text style={styles.docNumber}>{item.number}</Text>
+            )}
+          </View>
           <Text style={styles.arrow}>›</Text>
         </View>
       </TouchableOpacity>
@@ -98,7 +105,7 @@ export default function DocumentListScreen({ navigation }: Props) {
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📄</Text>
       <Text style={styles.emptyText}>暂无证件</Text>
-      <Text style={styles.emptySubtext}>点击下方按钮添加证件</Text>
+      <Text style={styles.emptySubtext}>点击下方按钮添加您的第一份证件</Text>
     </View>
   );
 
@@ -111,49 +118,154 @@ export default function DocumentListScreen({ navigation }: Props) {
         contentContainerStyle={styles.list}
         ListEmptyComponent={!loading ? renderEmpty : null}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent.violet}
+          />
         }
       />
       <TouchableOpacity
-        style={styles.addButton}
+        style={styles.addBtnWrap}
+        activeOpacity={0.9}
         onPress={() => navigation.navigate('AddDocument', {})}
       >
-        <Text style={styles.addButtonText}>+ 添加证件</Text>
+        <LinearGradient
+          colors={['#9B7CE8', '#8060C8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.addBtn}
+        >
+          <Text style={styles.addBtnText}>+ 添加证件</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  list: { padding: 16, paddingBottom: 100 },
-  card: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    marginBottom: 12, flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg.primary,
   },
-  cardLeft: { marginRight: 12 },
-  docIcon: { fontSize: 32 },
-  cardCenter: { flex: 1 },
-  docName: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 4 },
-  docType: { fontSize: 13, color: '#666', marginBottom: 2 },
-  docNumber: { fontSize: 12, color: '#999' },
-  cardRight: { alignItems: 'flex-end' },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginBottom: 4 },
-  expiredBadge: { backgroundColor: '#ffebee' },
-  expiredText: { color: '#f44336', fontSize: 11, fontWeight: '600' },
-  warningBadge: { backgroundColor: '#fff3e0' },
-  warningText: { color: '#ff9800', fontSize: 11, fontWeight: '600' },
-  arrow: { fontSize: 22, color: '#ccc' },
-  emptyContainer: { alignItems: 'center', paddingTop: 80 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 18, color: '#999', marginBottom: 8 },
-  emptySubtext: { fontSize: 14, color: '#ccc' },
-  addButton: {
-    position: 'absolute', bottom: 24, left: 24, right: 24,
-    backgroundColor: '#ff9800', paddingVertical: 16, borderRadius: 12,
+  list: {
+    padding: spacing.xl,
+    paddingBottom: 100,
+  },
+  card: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
+  },
+  cardRow: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  addButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  iconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.md,
+    backgroundColor: colors.bg.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
+  docIcon: {
+    fontSize: 26,
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  docName: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text.primary,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  docType: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    marginBottom: 2,
+  },
+  docNumber: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+    marginTop: 2,
+    letterSpacing: 0.3,
+  },
+  expiredBadge: {
+    backgroundColor: colors.status.expiredBg,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  expiredBadgeText: {
+    color: colors.accent.coral,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  warningBadge: {
+    backgroundColor: colors.status.warningBg,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  warningBadgeText: {
+    color: colors.accent.gold,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  arrow: {
+    fontSize: 24,
+    color: colors.text.tertiary,
+    marginLeft: spacing.sm,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  emptyIcon: {
+    fontSize: 56,
+    marginBottom: spacing.lg,
+  },
+  emptyText: {
+    fontSize: fontSize.xl,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    marginTop: spacing.sm,
+  },
+  addBtnWrap: {
+    position: 'absolute',
+    bottom: 24,
+    left: spacing.xl,
+    right: spacing.xl,
+  },
+  addBtn: {
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    ...shadow.elevated,
+  },
+  addBtnText: {
+    color: colors.text.primary,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });
