@@ -10,15 +10,15 @@ import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DocumentDetail'>;
 
-const DOC_TYPE_MAP: Record<string, { icon: string; name: string }> = {
-  deed: { icon: '🏠', name: '房产证' },
-  contract: { icon: '📝', name: '购房合同' },
-  id: { icon: '🪪', name: '身份证' },
-  passport: { icon: '📕', name: '护照' },
-  visa: { icon: '✈️', name: '签证' },
-  tax: { icon: '💰', name: '税单' },
-  insurance: { icon: '🛡️', name: '保险' },
-  other: { icon: '📎', name: '其他' },
+const DOC_TYPE_NAME: Record<string, string> = {
+  deed: '房产证',
+  contract: '购房合同',
+  id: '身份证',
+  passport: '护照',
+  visa: '签证',
+  tax: '税单',
+  insurance: '保险',
+  other: '其他',
 };
 
 export default function DocumentDetailScreen({ navigation, route }: Props) {
@@ -26,9 +26,7 @@ export default function DocumentDetailScreen({ navigation, route }: Props) {
   const [doc, setDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDocument();
-  }, [documentId]);
+  useEffect(() => { loadDocument(); }, [documentId]);
 
   const loadDocument = async () => {
     try {
@@ -65,46 +63,23 @@ export default function DocumentDetailScreen({ navigation, route }: Props) {
     );
   };
 
-  const getExpiryConfig = (days: number) => {
-    if (days < 0) {
-      return {
-        bgColor: colors.status.expiredBg,
-        textColor: colors.accent.coral,
-        borderColor: 'rgba(232,124,109,0.20)',
-        label: `⚠️ 已过期 ${Math.abs(days)} 天`,
-      };
-    }
-    if (days <= 90) {
-      return {
-        bgColor: colors.status.warningBg,
-        textColor: colors.accent.gold,
-        borderColor: 'rgba(232,184,109,0.20)',
-        label: `⏰ 还有 ${days} 天到期`,
-      };
-    }
-    return {
-      bgColor: colors.status.safeBg,
-      textColor: colors.accent.jade,
-      borderColor: 'rgba(94,184,138,0.20)',
-      label: `✅ 有效期剩余 ${days} 天`,
-    };
+  const getExpiryLabel = (days: number) => {
+    if (days < 0) return { text: `已过期 ${Math.abs(days)} 天`, color: colors.accent.coral, bg: colors.status.expiredBg };
+    if (days <= 90) return { text: `还有 ${days} 天到期`, color: colors.accent.gold, bg: colors.status.warningBg };
+    return { text: `有效期剩余 ${days} 天`, color: colors.accent.primary, bg: colors.status.safeBg };
   };
 
   if (loading || !doc) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator
-          size="large"
-          color={colors.accent.violet}
-          style={{ marginTop: spacing.huge }}
-        />
+        <ActivityIndicator size="large" color={colors.accent.primary} style={{ marginTop: spacing.huge }} />
       </SafeAreaView>
     );
   }
 
-  const typeInfo = DOC_TYPE_MAP[doc.type] || DOC_TYPE_MAP.other;
+  const typeName = DOC_TYPE_NAME[doc.type] || DOC_TYPE_NAME.other;
   const daysLeft = doc.expiryDate ? getDaysUntilExpiry(doc.expiryDate) : null;
-  const expiryConfig = daysLeft !== null ? getExpiryConfig(daysLeft) : null;
+  const expiryInfo = daysLeft !== null ? getExpiryLabel(daysLeft) : null;
 
   const infoRows: { label: string; value: string }[] = [];
   if (doc.number) infoRows.push({ label: '证件编号', value: doc.number });
@@ -116,26 +91,13 @@ export default function DocumentDetailScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.headerIcon}>{typeInfo.icon}</Text>
-          </View>
+          <Text style={styles.typeLabel}>{typeName}</Text>
           <Text style={styles.headerName}>{doc.name}</Text>
-          <Text style={styles.headerType}>{typeInfo.name}</Text>
         </View>
 
-        {expiryConfig && (
-          <View
-            style={[
-              styles.expiryBanner,
-              {
-                backgroundColor: expiryConfig.bgColor,
-                borderColor: expiryConfig.borderColor,
-              },
-            ]}
-          >
-            <Text style={[styles.expiryText, { color: expiryConfig.textColor }]}>
-              {expiryConfig.label}
-            </Text>
+        {expiryInfo && (
+          <View style={[styles.expiryBanner, { backgroundColor: expiryInfo.bg }]}>
+            <Text style={[styles.expiryText, { color: expiryInfo.color }]}>{expiryInfo.text}</Text>
           </View>
         )}
 
@@ -144,10 +106,7 @@ export default function DocumentDetailScreen({ navigation, route }: Props) {
           {infoRows.map((row, index) => (
             <View
               key={row.label}
-              style={[
-                styles.infoRow,
-                index < infoRows.length - 1 && styles.infoRowBorder,
-              ]}
+              style={[styles.infoRow, index < infoRows.length - 1 && styles.infoRowBorder]}
             >
               <Text style={styles.infoLabel}>{row.label}</Text>
               <Text style={styles.infoValue}>{row.value}</Text>
@@ -156,11 +115,7 @@ export default function DocumentDetailScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDelete}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} activeOpacity={0.8}>
             <Text style={styles.deleteButtonText}>删除证件</Text>
           </TouchableOpacity>
         </View>
@@ -178,71 +133,47 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.huge,
   },
   header: {
-    alignItems: 'center',
     paddingVertical: spacing.xxxl,
     paddingHorizontal: spacing.xl,
-    backgroundColor: colors.bg.secondary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.subtle,
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: radius.xxl,
-    backgroundColor: colors.bg.card,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-    ...shadow.card,
   },
-  headerIcon: {
-    fontSize: 40,
+  typeLabel: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    fontWeight: '500',
+    marginBottom: spacing.sm,
   },
   headerName: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
     color: colors.text.primary,
-    marginBottom: spacing.xs,
     textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  headerType: {
-    fontSize: fontSize.md,
-    color: colors.text.tertiary,
   },
   expiryBanner: {
     marginHorizontal: spacing.xl,
-    marginTop: spacing.xl,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
     alignItems: 'center',
-    borderWidth: 1,
   },
   expiryText: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-    letterSpacing: 0.3,
   },
   section: {
     backgroundColor: colors.bg.card,
     marginHorizontal: spacing.xl,
     marginTop: spacing.xl,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
     ...shadow.card,
   },
   sectionTitle: {
     fontSize: fontSize.xs,
     color: colors.text.tertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
     fontWeight: '600',
     marginBottom: spacing.lg,
+    letterSpacing: 1,
   },
   infoRow: {
     flexDirection: 'row',
@@ -268,16 +199,16 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxxl,
   },
   deleteButton: {
-    backgroundColor: colors.bg.card,
     borderWidth: 1,
-    borderColor: 'rgba(232,124,109,0.30)',
+    borderColor: colors.accent.coral,
     paddingVertical: spacing.lg,
     borderRadius: radius.lg,
     alignItems: 'center',
+    backgroundColor: colors.bg.card,
   },
   deleteButtonText: {
     color: colors.accent.coral,
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
 });

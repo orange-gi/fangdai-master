@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChatMessage, RootStackParamList } from '../types';
 import { chatService } from '../services/chat';
 import { colors, spacing, radius, fontSize, shadow } from '../theme';
@@ -19,17 +18,12 @@ export default function ChatScreen({ route }: Props) {
   const [chatId, setChatId] = useState<string | null>(route.params?.chatId || null);
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    initChat();
-  }, []);
+  useEffect(() => { initChat(); }, []);
 
   const initChat = async () => {
     if (chatId) {
       const history = await chatService.getHistory(chatId);
-      if (history) {
-        setMessages(history.messages);
-        return;
-      }
+      if (history) { setMessages(history.messages); return; }
     }
     const chat = await chatService.createChat();
     setChatId(chat.id);
@@ -37,7 +31,7 @@ export default function ChatScreen({ route }: Props) {
     const welcome: ChatMessage = {
       id: 'welcome',
       role: 'assistant',
-      content: '您好！我是房产大师AI助手 🤖\n\n我可以帮您：\n• 💰 税务规划和咨询\n• 🏠 房产管理建议\n• 📄 证件管理提醒\n• 📚 政策解读分析\n\n请问有什么可以帮您的？',
+      content: '您好！我是房产大师AI助手。\n\n我可以帮您：\n- 税务规划和咨询\n- 房产管理建议\n- 证件管理提醒\n- 政策解读分析\n\n请问有什么可以帮您的？',
       timestamp: new Date().toISOString(),
     };
     setMessages([welcome]);
@@ -45,7 +39,6 @@ export default function ChatScreen({ route }: Props) {
 
   const handleSend = async () => {
     if (!inputText.trim() || sending || !chatId) return;
-
     const text = inputText.trim();
     setInputText('');
     setSending(true);
@@ -53,17 +46,11 @@ export default function ChatScreen({ route }: Props) {
     try {
       const userMsg = await chatService.sendMessage(chatId, text);
       setMessages(prev => [...prev, userMsg]);
-
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
       const aiMsg = await chatService.getAIResponse(chatId, text);
       setMessages(prev => [...prev, aiMsg]);
-
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (error) {
       console.error('发送消息失败:', error);
     } finally {
@@ -83,28 +70,15 @@ export default function ChatScreen({ route }: Props) {
     return (
       <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.aiBubble]}>
         {!isUser && (
-          <View style={styles.aiAvatarContainer}>
-            <Text style={styles.aiAvatar}>🤖</Text>
+          <View style={styles.aiLabel}>
+            <Text style={styles.aiLabelText}>AI</Text>
           </View>
         )}
-        {isUser ? (
-          <LinearGradient
-            colors={[colors.accent.gold, colors.gradient.goldEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.messageContent, styles.userContent]}
-          >
-            <Text style={[styles.messageText, styles.userText]}>
-              {item.content}
-            </Text>
-          </LinearGradient>
-        ) : (
-          <View style={[styles.messageContent, styles.aiContent]}>
-            <Text style={[styles.messageText, styles.aiText]}>
-              {item.content}
-            </Text>
-          </View>
-        )}
+        <View style={[styles.messageContent, isUser ? styles.userContent : styles.aiContent]}>
+          <Text style={[styles.messageText, isUser ? styles.userText : styles.aiText]}>
+            {item.content}
+          </Text>
+        </View>
       </View>
     );
   };
@@ -126,26 +100,26 @@ export default function ChatScreen({ route }: Props) {
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             sending ? (
-              <View style={styles.typingIndicator}>
-                <View style={styles.aiAvatarContainer}>
-                  <Text style={styles.aiAvatar}>🤖</Text>
+              <View style={styles.typingRow}>
+                <View style={styles.aiLabel}>
+                  <Text style={styles.aiLabelText}>AI</Text>
                 </View>
                 <View style={styles.typingDots}>
-                  <ActivityIndicator size="small" color={colors.accent.jade} />
+                  <ActivityIndicator size="small" color={colors.accent.primary} />
                   <Text style={styles.typingText}>正在思考...</Text>
                 </View>
               </View>
             ) : messages.length <= 1 ? (
-              <View style={styles.quickQuestions}>
+              <View style={styles.quickSection}>
                 <Text style={styles.quickTitle}>常见问题</Text>
                 {QUICK_QUESTIONS.map((q, i) => (
                   <TouchableOpacity
                     key={i}
-                    style={styles.quickBtn}
+                    style={styles.quickChip}
                     activeOpacity={0.7}
-                    onPress={() => { setInputText(q); }}
+                    onPress={() => setInputText(q)}
                   >
-                    <Text style={styles.quickText}>{q}</Text>
+                    <Text style={styles.quickChipText}>{q}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -168,27 +142,14 @@ export default function ChatScreen({ route }: Props) {
             />
           </View>
           <TouchableOpacity
+            style={[styles.sendBtn, (!inputText.trim() || sending) && styles.sendBtnDisabled]}
             activeOpacity={0.7}
             onPress={handleSend}
             disabled={!inputText.trim() || sending}
           >
-            <LinearGradient
-              colors={
-                !inputText.trim() || sending
-                  ? [colors.bg.card, colors.bg.card]
-                  : [colors.accent.gold, colors.gradient.goldEnd]
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.sendBtn}
-            >
-              <Text style={[
-                styles.sendBtnText,
-                (!inputText.trim() || sending) && styles.sendBtnTextDisabled,
-              ]}>
-                发送
-              </Text>
-            </LinearGradient>
+            <Text style={[styles.sendBtnText, (!inputText.trim() || sending) && styles.sendBtnTextDisabled]}>
+              发送
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -219,34 +180,33 @@ const styles = StyleSheet.create({
   aiBubble: {
     justifyContent: 'flex-start',
   },
-  aiAvatarContainer: {
-    width: 36,
-    height: 36,
+  aiLabel: {
+    width: 32,
+    height: 32,
     borderRadius: radius.full,
-    backgroundColor: colors.bg.card,
+    backgroundColor: colors.accent.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
   },
-  aiAvatar: {
-    fontSize: 18,
+  aiLabelText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.accent.primary,
   },
   messageContent: {
     maxWidth: '75%',
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.lg,
   },
   userContent: {
+    backgroundColor: colors.accent.primary,
     borderBottomRightRadius: spacing.xs,
-    ...shadow.card,
   },
   aiContent: {
     backgroundColor: colors.bg.card,
     borderBottomLeftRadius: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
+    ...shadow.card,
   },
   messageText: {
     fontSize: fontSize.md,
@@ -254,12 +214,11 @@ const styles = StyleSheet.create({
   },
   userText: {
     color: colors.text.inverse,
-    fontWeight: '500',
   },
   aiText: {
     color: colors.text.primary,
   },
-  typingIndicator: {
+  typingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -269,16 +228,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.bg.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
+    ...shadow.card,
   },
   typingText: {
     fontSize: fontSize.sm,
     color: colors.text.tertiary,
   },
-  quickQuestions: {
+  quickSection: {
     marginTop: spacing.sm,
     padding: spacing.xs,
   },
@@ -286,21 +244,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.text.tertiary,
     marginBottom: spacing.md,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '500',
   },
-  quickBtn: {
+  quickChip: {
     backgroundColor: colors.bg.card,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border.accent,
+    borderColor: colors.border.subtle,
   },
-  quickText: {
+  quickChipText: {
     fontSize: fontSize.sm,
-    color: colors.accent.gold,
+    color: colors.accent.primary,
     fontWeight: '500',
   },
   inputBar: {
@@ -308,7 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.bg.secondary,
+    backgroundColor: colors.bg.card,
     borderTopWidth: 1,
     borderTopColor: colors.border.subtle,
     gap: spacing.sm,
@@ -316,7 +273,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flex: 1,
     backgroundColor: colors.bg.input,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border.medium,
     paddingHorizontal: spacing.lg,
@@ -328,17 +285,23 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendBtn: {
-    borderRadius: radius.xl,
+    backgroundColor: colors.accent.primary,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
   },
+  sendBtnDisabled: {
+    backgroundColor: colors.bg.primary,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+  },
   sendBtnText: {
     color: colors.text.inverse,
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sendBtnTextDisabled: {
     color: colors.text.tertiary,

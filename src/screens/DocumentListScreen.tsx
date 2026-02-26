@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Document, RootStackParamList } from '../types';
@@ -11,15 +10,15 @@ import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DocumentList'>;
 
-const DOC_TYPE_MAP: Record<string, { icon: string; name: string }> = {
-  deed: { icon: '🏠', name: '房产证' },
-  contract: { icon: '📝', name: '购房合同' },
-  id: { icon: '🪪', name: '身份证' },
-  passport: { icon: '📕', name: '护照' },
-  visa: { icon: '✈️', name: '签证' },
-  tax: { icon: '💰', name: '税单' },
-  insurance: { icon: '🛡️', name: '保险' },
-  other: { icon: '📎', name: '其他' },
+const DOC_TYPE_NAME: Record<string, string> = {
+  deed: '房产证',
+  contract: '购房合同',
+  id: '身份证',
+  passport: '护照',
+  visa: '签证',
+  tax: '税单',
+  insurance: '保险',
+  other: '其他',
 };
 
 export default function DocumentListScreen({ navigation }: Props) {
@@ -27,9 +26,7 @@ export default function DocumentListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
+  useEffect(() => { loadDocuments(); }, []);
 
   const loadDocuments = async () => {
     try {
@@ -43,10 +40,7 @@ export default function DocumentListScreen({ navigation }: Props) {
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadDocuments();
-  };
+  const onRefresh = () => { setRefreshing(true); loadDocuments(); };
 
   const isExpired = (expiryDate?: string): boolean => {
     if (!expiryDate) return false;
@@ -62,7 +56,7 @@ export default function DocumentListScreen({ navigation }: Props) {
   };
 
   const renderDocument = ({ item }: { item: Document }) => {
-    const typeInfo = DOC_TYPE_MAP[item.type] || DOC_TYPE_MAP.other;
+    const typeName = DOC_TYPE_NAME[item.type] || DOC_TYPE_NAME.other;
     const expired = isExpired(item.expiryDate);
     const expiringSoon = !expired && isExpiringSoon(item.expiryDate);
 
@@ -70,40 +64,29 @@ export default function DocumentListScreen({ navigation }: Props) {
       <TouchableOpacity
         style={styles.card}
         onPress={() => navigation.navigate('DocumentDetail', { documentId: item.id })}
-        activeOpacity={0.85}
+        activeOpacity={0.7}
       >
-        <View style={styles.cardRow}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.docIcon}>{typeInfo.icon}</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardTitleRow}>
-              <Text style={styles.docName} numberOfLines={1}>{item.name}</Text>
-              {expired && (
-                <View style={styles.expiredBadge}>
-                  <Text style={styles.expiredBadgeText}>已过期</Text>
-                </View>
-              )}
-              {expiringSoon && (
-                <View style={styles.warningBadge}>
-                  <Text style={styles.warningBadgeText}>即将到期</Text>
-                </View>
-              )}
+        <View style={styles.cardTop}>
+          <Text style={styles.typeLabel}>{typeName}</Text>
+          {expired && (
+            <View style={styles.expiredBadge}>
+              <Text style={styles.expiredText}>已过期</Text>
             </View>
-            <Text style={styles.docType}>{typeInfo.name}</Text>
-            {item.number && (
-              <Text style={styles.docNumber}>{item.number}</Text>
-            )}
-          </View>
-          <Text style={styles.arrow}>›</Text>
+          )}
+          {expiringSoon && (
+            <View style={styles.warningBadge}>
+              <Text style={styles.warningText}>即将到期</Text>
+            </View>
+          )}
         </View>
+        <Text style={styles.docName} numberOfLines={1}>{item.name}</Text>
+        {item.number && <Text style={styles.docNumber}>{item.number}</Text>}
       </TouchableOpacity>
     );
   };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>📄</Text>
       <Text style={styles.emptyText}>暂无证件</Text>
       <Text style={styles.emptySubtext}>点击下方按钮添加您的第一份证件</Text>
     </View>
@@ -118,26 +101,15 @@ export default function DocumentListScreen({ navigation }: Props) {
         contentContainerStyle={styles.list}
         ListEmptyComponent={!loading ? renderEmpty : null}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.accent.violet}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent.primary} />
         }
       />
       <TouchableOpacity
-        style={styles.addBtnWrap}
-        activeOpacity={0.9}
+        style={styles.addBtn}
+        activeOpacity={0.8}
         onPress={() => navigation.navigate('AddDocument', {})}
       >
-        <LinearGradient
-          colors={['#9B7CE8', '#8060C8']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.addBtn}
-        >
-          <Text style={styles.addBtnText}>+ 添加证件</Text>
-        </LinearGradient>
+        <Text style={styles.addBtnText}>添加证件</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -154,64 +126,29 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.bg.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
     ...shadow.card,
   },
-  cardRow: {
+  cardTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
-  iconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.md,
-    backgroundColor: colors.bg.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-  },
-  docIcon: {
-    fontSize: 26,
-  },
-  cardContent: {
-    flex: 1,
-  },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  docName: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: colors.text.primary,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  docType: {
-    fontSize: fontSize.sm,
-    color: colors.text.tertiary,
-    marginBottom: 2,
-  },
-  docNumber: {
+  typeLabel: {
     fontSize: fontSize.xs,
     color: colors.text.tertiary,
-    marginTop: 2,
-    letterSpacing: 0.3,
+    fontWeight: '500',
+    flex: 1,
   },
   expiredBadge: {
     backgroundColor: colors.status.expiredBg,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: radius.full,
+    borderRadius: radius.sm,
   },
-  expiredBadgeText: {
+  expiredText: {
     color: colors.accent.coral,
     fontSize: fontSize.xs,
     fontWeight: '600',
@@ -220,28 +157,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.status.warningBg,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: radius.full,
+    borderRadius: radius.sm,
   },
-  warningBadgeText: {
+  warningText: {
     color: colors.accent.gold,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
-  arrow: {
-    fontSize: 24,
+  docName: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  docNumber: {
+    fontSize: fontSize.sm,
     color: colors.text.tertiary,
-    marginLeft: spacing.sm,
   },
   emptyContainer: {
     alignItems: 'center',
     paddingTop: 100,
   },
-  emptyIcon: {
-    fontSize: 56,
-    marginBottom: spacing.lg,
-  },
   emptyText: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     color: colors.text.secondary,
     fontWeight: '600',
   },
@@ -250,22 +188,19 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
     marginTop: spacing.sm,
   },
-  addBtnWrap: {
+  addBtn: {
     position: 'absolute',
     bottom: 24,
     left: spacing.xl,
     right: spacing.xl,
-  },
-  addBtn: {
+    backgroundColor: colors.accent.primary,
     paddingVertical: 16,
     borderRadius: radius.lg,
     alignItems: 'center',
-    ...shadow.elevated,
   },
   addBtnText: {
-    color: colors.text.primary,
+    color: colors.text.inverse,
     fontSize: fontSize.lg,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '600',
   },
 });

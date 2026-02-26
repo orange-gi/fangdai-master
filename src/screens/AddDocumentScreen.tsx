@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { DocumentType, RootStackParamList } from '../types';
@@ -11,15 +10,15 @@ import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddDocument'>;
 
-const DOC_TYPES: { value: DocumentType; label: string; icon: string }[] = [
-  { value: 'deed', label: '房产证', icon: '🏠' },
-  { value: 'contract', label: '购房合同', icon: '📝' },
-  { value: 'id', label: '身份证', icon: '🪪' },
-  { value: 'passport', label: '护照', icon: '📕' },
-  { value: 'visa', label: '签证', icon: '✈️' },
-  { value: 'tax', label: '税单', icon: '💰' },
-  { value: 'insurance', label: '保险', icon: '🛡️' },
-  { value: 'other', label: '其他', icon: '📎' },
+const DOC_TYPES: { value: DocumentType; label: string }[] = [
+  { value: 'deed', label: '房产证' },
+  { value: 'contract', label: '购房合同' },
+  { value: 'id', label: '身份证' },
+  { value: 'passport', label: '护照' },
+  { value: 'visa', label: '签证' },
+  { value: 'tax', label: '税单' },
+  { value: 'insurance', label: '保险' },
+  { value: 'other', label: '其他' },
 ];
 
 export default function AddDocumentScreen({ navigation, route }: Props) {
@@ -75,20 +74,11 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
             {DOC_TYPES.map((t) => (
               <TouchableOpacity
                 key={t.value}
-                style={[
-                  styles.typeItem,
-                  form.type === t.value && styles.typeItemActive,
-                ]}
+                style={[styles.typePill, form.type === t.value && styles.typePillActive]}
                 onPress={() => updateForm('type', t.value)}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
-                <Text style={styles.typeIcon}>{t.icon}</Text>
-                <Text
-                  style={[
-                    styles.typeLabel,
-                    form.type === t.value && styles.typeLabelActive,
-                  ]}
-                >
+                <Text style={[styles.typeText, form.type === t.value && styles.typeTextActive]}>
                   {t.label}
                 </Text>
               </TouchableOpacity>
@@ -145,21 +135,14 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
         </View>
 
         <TouchableOpacity
-          style={styles.submitBtnWrap}
+          style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
           onPress={handleSubmit}
           disabled={loading}
-          activeOpacity={0.9}
+          activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={loading ? ['#6B5CA5', '#5A4B90'] : ['#9B7CE8', '#8060C8']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.submitBtn}
-          >
-            <Text style={styles.submitBtnText}>
-              {loading ? '保存中...' : '保存证件'}
-            </Text>
-          </LinearGradient>
+          <Text style={styles.submitBtnText}>
+            {loading ? '保存中...' : '保存证件'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -181,48 +164,40 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.card,
     marginHorizontal: spacing.xl,
     marginTop: spacing.xl,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
     ...shadow.card,
   },
   sectionTitle: {
     fontSize: fontSize.xs,
     color: colors.text.tertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
     fontWeight: '600',
     marginBottom: spacing.lg,
+    letterSpacing: 1,
   },
   typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  typeItem: {
-    width: '23%',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
+  typePill: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.border.subtle,
-    backgroundColor: colors.bg.secondary,
+    borderColor: colors.border.medium,
+    backgroundColor: colors.bg.primary,
   },
-  typeItemActive: {
-    borderColor: colors.accent.violet,
-    backgroundColor: 'rgba(155,124,232,0.10)',
+  typePillActive: {
+    borderColor: colors.accent.primary,
+    backgroundColor: colors.accent.primaryLight,
   },
-  typeIcon: {
-    fontSize: 24,
-    marginBottom: spacing.xs,
+  typeText: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
   },
-  typeLabel: {
-    fontSize: fontSize.xs,
-    color: colors.text.tertiary,
-  },
-  typeLabelActive: {
-    color: colors.accent.violet,
+  typeTextActive: {
+    color: colors.accent.primary,
     fontWeight: '600',
   },
   inputGroup: {
@@ -244,20 +219,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.text.primary,
   },
-  submitBtnWrap: {
+  submitBtn: {
     marginHorizontal: spacing.xl,
     marginTop: spacing.xxl,
-  },
-  submitBtn: {
+    backgroundColor: colors.accent.primary,
     paddingVertical: 16,
     borderRadius: radius.lg,
     alignItems: 'center',
-    ...shadow.elevated,
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
   },
   submitBtnText: {
-    color: colors.text.primary,
+    color: colors.text.inverse,
     fontSize: fontSize.lg,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '600',
   },
 });

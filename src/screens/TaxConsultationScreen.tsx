@@ -5,19 +5,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChatMessage, RootStackParamList } from '../types';
 import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TaxConsultation'>;
 
 const TAX_AI_RESPONSES: Record<string, string> = {
-  '房产税': '关于海外房产税的详细说明：\n\n📌 **美国房产税**\n• 税率：通常为房产评估价值的0.5%-2.5%\n• 各州税率差异较大\n• 加州约1.1%，纽约约2.1%，德州约1.8%\n\n📌 **缴纳方式**\n• 通常每年分两次缴纳\n• 可通过银行托管账户自动缴纳\n• 逾期有罚金和利息\n\n📌 **减免政策**\n• 自住房可能有减免\n• 老年人和退伍军人有额外减免\n• 部分州有首次购房者优惠\n\n建议您根据房产所在州的具体规定，提前做好税务规划。',
-  '所得税': '关于海外房产所得税说明：\n\n📌 **租金收入**\n• 外国人在美国的租金收入需缴纳30%预扣税\n• 也可选择按净收入申报，按累进税率缴税（通常更优惠）\n• 可扣除的费用：房贷利息、折旧、维修费、物业管理费等\n\n📌 **申报要求**\n• 需要申请ITIN（个人纳税识别号）\n• 每年4月15日前提交1040-NR表格\n• 建议聘请专业会计师\n\n📌 **税务优化**\n• 合理使用折旧扣除（住宅27.5年，商业39年）\n• 记录所有可扣除的费用\n• 考虑使用LLC结构持有房产',
-  '资本利得': '关于资本利得税的说明：\n\n📌 **基本规则**\n• 出售房产的增值部分需缴税\n• 持有1年以上：长期资本利得税率0%-20%\n• 持有不足1年：按普通所得税率\n\n📌 **FIRPTA预扣**\n• 外国人出售美国房产，买方须预扣15%\n• 成交价低于30万美元且买方自住可豁免\n• 预扣税可在报税时申请退还差额\n\n📌 **税务筹划建议**\n• 尽量持有超过1年以享受低税率\n• 考虑1031交换延迟纳税\n• 合理计算成本基础（购入价+改善费用）',
+  '房产税': '关于海外房产税的详细说明：\n\n美国房产税\n- 税率：通常为房产评估价值的0.5%-2.5%\n- 各州税率差异较大\n- 加州约1.1%，纽约约2.1%，德州约1.8%\n\n缴纳方式\n- 通常每年分两次缴纳\n- 可通过银行托管账户自动缴纳\n- 逾期有罚金和利息\n\n减免政策\n- 自住房可能有减免\n- 老年人和退伍军人有额外减免\n- 部分州有首次购房者优惠\n\n建议您根据房产所在州的具体规定，提前做好税务规划。',
+  '所得税': '关于海外房产所得税说明：\n\n租金收入\n- 外国人在美国的租金收入需缴纳30%预扣税\n- 也可选择按净收入申报，按累进税率缴税（通常更优惠）\n- 可扣除的费用：房贷利息、折旧、维修费、物业管理费等\n\n申报要求\n- 需要申请ITIN（个人纳税识别号）\n- 每年4月15日前提交1040-NR表格\n- 建议聘请专业会计师\n\n税务优化\n- 合理使用折旧扣除（住宅27.5年，商业39年）\n- 记录所有可扣除的费用\n- 考虑使用LLC结构持有房产',
+  '资本利得': '关于资本利得税的说明：\n\n基本规则\n- 出售房产的增值部分需缴税\n- 持有1年以上：长期资本利得税率0%-20%\n- 持有不足1年：按普通所得税率\n\nFIRPTA预扣\n- 外国人出售美国房产，买方须预扣15%\n- 成交价低于30万美元且买方自住可豁免\n- 预扣税可在报税时申请退还差额\n\n税务筹划建议\n- 尽量持有超过1年以享受低税率\n- 考虑1031交换延迟纳税\n- 合理计算成本基础（购入价+改善费用）',
 };
 
-const DEFAULT_TAX_RESPONSE = '感谢您的税务咨询！\n\n作为专业的税务AI助手，我可以帮您解答以下问题：\n\n1. 💰 **房产税** - 各国房产税计算和缴纳\n2. 📊 **所得税** - 租金收入的税务处理\n3. 📈 **资本利得税** - 房产出售的税务规划\n4. 📋 **税务申报** - 申报流程和截止日期\n5. 🔧 **税务优化** - 合法节税策略\n\n请告诉我您具体想了解哪方面的税务问题？';
+const DEFAULT_TAX_RESPONSE = '感谢您的税务咨询！\n\n作为税务AI助手，我可以帮您解答以下问题：\n\n1. 房产税 - 各国房产税计算和缴纳\n2. 所得税 - 租金收入的税务处理\n3. 资本利得税 - 房产出售的税务规划\n4. 税务申报 - 申报流程和截止日期\n5. 税务优化 - 合法节税策略\n\n请告诉我您具体想了解哪方面的税务问题？';
 
 function generateTaxResponse(msg: string): string {
   for (const [keyword, response] of Object.entries(TAX_AI_RESPONSES)) {
@@ -32,7 +31,7 @@ export default function TaxConsultationScreen(_props: Props) {
     {
       id: 'welcome',
       role: 'assistant',
-      content: '您好！我是税务咨询专家 💰\n\n我专注于海外房产税务问题，可以为您提供：\n• 房产税计算与规划\n• 所得税申报指导\n• 资本利得税优化\n• 跨境税务合规建议\n\n请问您想咨询什么税务问题？',
+      content: '您好！我是税务咨询专家。\n\n我专注于海外房产税务问题，可以为您提供：\n- 房产税计算与规划\n- 所得税申报指导\n- 资本利得税优化\n- 跨境税务合规建议\n\n请问您想咨询什么税务问题？',
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -79,28 +78,15 @@ export default function TaxConsultationScreen(_props: Props) {
     return (
       <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.aiBubble]}>
         {!isUser && (
-          <View style={styles.aiAvatarContainer}>
-            <Text style={styles.aiAvatar}>💰</Text>
+          <View style={styles.aiLabel}>
+            <Text style={styles.aiLabelText}>AI</Text>
           </View>
         )}
-        {isUser ? (
-          <LinearGradient
-            colors={[colors.accent.gold, '#C9873A']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.messageContent, styles.userContent]}
-          >
-            <Text style={[styles.messageText, styles.userText]}>
-              {item.content}
-            </Text>
-          </LinearGradient>
-        ) : (
-          <View style={[styles.messageContent, styles.aiContent]}>
-            <Text style={[styles.messageText, styles.aiText]}>
-              {item.content}
-            </Text>
-          </View>
-        )}
+        <View style={[styles.messageContent, isUser ? styles.userContent : styles.aiContent]}>
+          <Text style={[styles.messageText, isUser ? styles.userText : styles.aiText]}>
+            {item.content}
+          </Text>
+        </View>
       </View>
     );
   };
@@ -122,26 +108,26 @@ export default function TaxConsultationScreen(_props: Props) {
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             sending ? (
-              <View style={styles.typingIndicator}>
-                <View style={styles.aiAvatarContainer}>
-                  <Text style={styles.aiAvatar}>💰</Text>
+              <View style={styles.typingRow}>
+                <View style={styles.aiLabel}>
+                  <Text style={styles.aiLabelText}>AI</Text>
                 </View>
                 <View style={styles.typingDots}>
-                  <ActivityIndicator size="small" color={colors.accent.gold} />
+                  <ActivityIndicator size="small" color={colors.accent.primary} />
                   <Text style={styles.typingText}>税务专家分析中...</Text>
                 </View>
               </View>
             ) : messages.length <= 1 ? (
-              <View style={styles.quickQuestions}>
+              <View style={styles.quickSection}>
                 <Text style={styles.quickTitle}>常见税务问题</Text>
                 {TAX_QUICK_QUESTIONS.map((q, i) => (
                   <TouchableOpacity
                     key={i}
-                    style={styles.quickBtn}
+                    style={styles.quickChip}
                     activeOpacity={0.7}
                     onPress={() => setInputText(q)}
                   >
-                    <Text style={styles.quickText}>{q}</Text>
+                    <Text style={styles.quickChipText}>{q}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -164,27 +150,14 @@ export default function TaxConsultationScreen(_props: Props) {
             />
           </View>
           <TouchableOpacity
+            style={[styles.sendBtn, (!inputText.trim() || sending) && styles.sendBtnDisabled]}
             activeOpacity={0.7}
             onPress={handleSend}
             disabled={!inputText.trim() || sending}
           >
-            <LinearGradient
-              colors={
-                !inputText.trim() || sending
-                  ? [colors.bg.card, colors.bg.card]
-                  : [colors.accent.gold, '#C9873A']
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.sendBtn}
-            >
-              <Text style={[
-                styles.sendBtnText,
-                (!inputText.trim() || sending) && styles.sendBtnTextDisabled,
-              ]}>
-                发送
-              </Text>
-            </LinearGradient>
+            <Text style={[styles.sendBtnText, (!inputText.trim() || sending) && styles.sendBtnTextDisabled]}>
+              发送
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -215,34 +188,33 @@ const styles = StyleSheet.create({
   aiBubble: {
     justifyContent: 'flex-start',
   },
-  aiAvatarContainer: {
-    width: 36,
-    height: 36,
+  aiLabel: {
+    width: 32,
+    height: 32,
     borderRadius: radius.full,
-    backgroundColor: colors.bg.card,
+    backgroundColor: colors.accent.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.accent,
   },
-  aiAvatar: {
-    fontSize: 18,
+  aiLabelText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.accent.primary,
   },
   messageContent: {
     maxWidth: '75%',
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.lg,
   },
   userContent: {
+    backgroundColor: colors.accent.primary,
     borderBottomRightRadius: spacing.xs,
-    ...shadow.card,
   },
   aiContent: {
     backgroundColor: colors.bg.card,
     borderBottomLeftRadius: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
+    ...shadow.card,
   },
   messageText: {
     fontSize: fontSize.md,
@@ -250,12 +222,11 @@ const styles = StyleSheet.create({
   },
   userText: {
     color: colors.text.inverse,
-    fontWeight: '500',
   },
   aiText: {
     color: colors.text.primary,
   },
-  typingIndicator: {
+  typingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -265,16 +236,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.bg.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border.accent,
+    ...shadow.card,
   },
   typingText: {
     fontSize: fontSize.sm,
-    color: colors.accent.goldDim,
+    color: colors.text.tertiary,
   },
-  quickQuestions: {
+  quickSection: {
     marginTop: spacing.sm,
     padding: spacing.xs,
   },
@@ -282,21 +252,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.text.tertiary,
     marginBottom: spacing.md,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '500',
   },
-  quickBtn: {
+  quickChip: {
     backgroundColor: colors.bg.card,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border.accent,
+    borderColor: colors.border.subtle,
   },
-  quickText: {
+  quickChipText: {
     fontSize: fontSize.sm,
-    color: colors.accent.gold,
+    color: colors.accent.primary,
     fontWeight: '500',
   },
   inputBar: {
@@ -304,7 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.bg.secondary,
+    backgroundColor: colors.bg.card,
     borderTopWidth: 1,
     borderTopColor: colors.border.subtle,
     gap: spacing.sm,
@@ -312,7 +281,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flex: 1,
     backgroundColor: colors.bg.input,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border.medium,
     paddingHorizontal: spacing.lg,
@@ -324,17 +293,23 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendBtn: {
-    borderRadius: radius.xl,
+    backgroundColor: colors.accent.primary,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
   },
+  sendBtnDisabled: {
+    backgroundColor: colors.bg.primary,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+  },
   sendBtnText: {
     color: colors.text.inverse,
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sendBtnTextDisabled: {
     color: colors.text.tertiary,

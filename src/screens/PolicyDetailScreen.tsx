@@ -10,15 +10,8 @@ import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PolicyDetail'>;
 
-const CATEGORY_MAP: Record<string, string> = {
+const CATEGORY_NAME: Record<string, string> = {
   tax: '税务政策', property: '房产政策', immigration: '移民政策', law: '法律法规',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  tax: colors.accent.gold,
-  property: colors.accent.sky,
-  immigration: colors.accent.violet,
-  law: colors.accent.coral,
 };
 
 export default function PolicyDetailScreen({ route }: Props) {
@@ -26,9 +19,7 @@ export default function PolicyDetailScreen({ route }: Props) {
   const [article, setArticle] = useState<PolicyArticle | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadArticle();
-  }, [articleId]);
+  useEffect(() => { loadArticle(); }, [articleId]);
 
   const loadArticle = async () => {
     try {
@@ -44,23 +35,19 @@ export default function PolicyDetailScreen({ route }: Props) {
   if (loading || !article) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent.gold} style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={colors.accent.primary} style={{ marginTop: 40 }} />
       </SafeAreaView>
     );
   }
-
-  const catColor = CATEGORY_COLORS[article.category] || colors.accent.gold;
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.meta}>
-            <View style={[styles.categoryBadge, { backgroundColor: catColor + '1A' }]}>
-              <Text style={[styles.categoryText, { color: catColor }]}>
-                {CATEGORY_MAP[article.category] || article.category}
-              </Text>
-            </View>
+            <Text style={styles.categoryText}>
+              {CATEGORY_NAME[article.category] || article.category}
+            </Text>
             <Text style={styles.date}>{article.publishedAt}</Text>
           </View>
           <Text style={styles.title}>{article.title}</Text>
@@ -71,11 +58,8 @@ export default function PolicyDetailScreen({ route }: Props) {
         </View>
 
         <View style={styles.summaryBox}>
-          <View style={styles.summaryBorder} />
-          <View style={styles.summaryContent}>
-            <Text style={styles.summaryLabel}>📋 摘要</Text>
-            <Text style={styles.summaryText}>{article.summary}</Text>
-          </View>
+          <Text style={styles.summaryLabel}>摘要</Text>
+          <Text style={styles.summaryText}>{article.summary}</Text>
         </View>
 
         <View style={styles.contentBox}>
@@ -101,11 +85,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: colors.bg.secondary,
     padding: spacing.xl,
     paddingTop: spacing.xxl,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.subtle,
   },
   meta: {
     flexDirection: 'row',
@@ -113,16 +94,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     gap: spacing.md,
   },
-  categoryBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: radius.sm,
-  },
   categoryText: {
     fontSize: fontSize.xs,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    fontWeight: '600',
+    color: colors.accent.primary,
   },
   date: {
     fontSize: fontSize.sm,
@@ -134,7 +109,6 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 34,
     marginBottom: spacing.md,
-    letterSpacing: 0.3,
   },
   sourceRow: {
     flexDirection: 'row',
@@ -144,38 +118,23 @@ const styles = StyleSheet.create({
   sourceLabel: {
     fontSize: fontSize.xs,
     color: colors.text.tertiary,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '500',
   },
   sourceValue: {
     fontSize: fontSize.sm,
     color: colors.text.secondary,
   },
   summaryBox: {
-    flexDirection: 'row',
-    backgroundColor: colors.bg.card,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.lg,
+    backgroundColor: colors.accent.primaryLight,
+    marginHorizontal: spacing.xl,
     borderRadius: radius.md,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-    ...shadow.card,
-  },
-  summaryBorder: {
-    width: 3,
-    backgroundColor: colors.accent.gold,
-  },
-  summaryContent: {
-    flex: 1,
     padding: spacing.lg,
   },
   summaryLabel: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.text.secondary,
     marginBottom: spacing.sm,
-    letterSpacing: 0.5,
   },
   summaryText: {
     fontSize: fontSize.md,
@@ -185,11 +144,9 @@ const styles = StyleSheet.create({
   contentBox: {
     backgroundColor: colors.bg.card,
     marginTop: spacing.md,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: spacing.xl,
     padding: spacing.xl,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
     ...shadow.card,
   },
   paragraph: {
