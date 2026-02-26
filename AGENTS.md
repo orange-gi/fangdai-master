@@ -27,6 +27,10 @@ npx eslint . --ext .ts,.tsx      # lint (TS files only; JS cloud functions have 
 npx tsc --noEmit                  # type-check (pre-existing errors in services/*.ts due to cloudbase mock returning void)
 ```
 
+### GUI testing on web
+
+React Native's `TouchableOpacity` on web doesn't respond to raw `xdotool` clicks. Use **headless Puppeteer** for automated navigation testing: find interactive elements via `document.querySelectorAll('[tabindex]')` and call `.click()`. The `BROWSER=none` flag prevents Expo from auto-opening a browser.
+
 ### Project structure
 
 - `src/screens/` — 15 screens (Home, PropertyList/Detail/Add/Edit, TaxCenter/Detail/Consultation, DocumentList/Detail/Add, PolicyList/Detail, Chat, Profile)
