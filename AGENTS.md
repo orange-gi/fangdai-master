@@ -24,7 +24,7 @@ All service files in `src/services/` have `USE_MOCK = true`. Data is served from
 
 ```bash
 npx eslint . --ext .ts,.tsx      # lint (TS files only; JS cloud functions have pre-existing warnings)
-npx tsc --noEmit                  # type-check (only pre-existing cloudbase.ts error expected)
+npx tsc --noEmit                  # type-check (pre-existing errors in services/*.ts due to cloudbase mock returning void)
 ```
 
 ### Project structure
