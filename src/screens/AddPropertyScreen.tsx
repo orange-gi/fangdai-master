@@ -61,7 +61,7 @@ export default function AddPropertyScreen({ navigation }: Props) {
       Alert.alert('成功', '房产添加成功', [
         { text: '确定', onPress: () => navigation.goBack() }
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('失败', '请稍后重试');
     } finally {
       setLoading(false);

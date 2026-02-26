@@ -56,7 +56,7 @@ export default function ProfileScreen({ navigation }: Props) {
       setUser(prev => prev ? { ...prev, nickname: nickname.trim() } : null);
       setEditing(false);
       Alert.alert('成功', '昵称已更新');
-    } catch (error) {
+    } catch {
       Alert.alert('失败', '更新失败');
     }
   };

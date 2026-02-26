@@ -24,6 +24,7 @@ function generateTaxResponse(msg: string): string {
   return DEFAULT_TAX_RESPONSE;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function TaxConsultationScreen(_props: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {

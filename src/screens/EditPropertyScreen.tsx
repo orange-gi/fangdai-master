@@ -54,7 +54,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
           currentValue: prop.currentValue.toString(),
         });
       }
-    } catch (error) {
+    } catch {
       Alert.alert('错误', '加载房产信息失败');
     } finally {
       setLoading(false);
@@ -79,7 +79,7 @@ export default function EditPropertyScreen({ navigation, route }: Props) {
       Alert.alert('成功', '房产信息已更新', [
         { text: '确定', onPress: () => navigation.goBack() },
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('失败', '更新失败，请稍后重试');
     } finally {
       setSaving(false);

@@ -50,7 +50,7 @@ export default function DocumentDetailScreen({ navigation, route }: Props) {
           try {
             await documentService.delete(documentId);
             navigation.goBack();
-          } catch (error) {
+          } catch {
             Alert.alert('删除失败', '请稍后重试');
           }
         },

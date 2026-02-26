@@ -49,7 +49,7 @@ export default function AddDocumentScreen({ navigation, route }: Props) {
       Alert.alert('成功', '证件添加成功', [
         { text: '确定', onPress: () => navigation.goBack() },
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('失败', '添加失败，请重试');
     } finally {
       setLoading(false);

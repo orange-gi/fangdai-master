@@ -53,7 +53,7 @@ export default function PropertyDetailScreen({ navigation, route }: Props) {
             try {
               await propertyService.delete(propertyId);
               navigation.goBack();
-            } catch (error) {
+            } catch {
               Alert.alert('删除失败', '请稍后重试');
             }
           },

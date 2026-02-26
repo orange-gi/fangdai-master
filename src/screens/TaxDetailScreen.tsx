@@ -45,7 +45,7 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
           try {
             await taxService.markPaid(record.id);
             loadData();
-          } catch (error) {
+          } catch {
             Alert.alert('失败', '操作失败，请重试');
           }
         },
@@ -63,7 +63,7 @@ export default function TaxDetailScreen({ navigation, route }: Props) {
           try {
             await taxService.delete(taxId);
             navigation.goBack();
-          } catch (error) {
+          } catch {
             Alert.alert('失败', '删除失败');
           }
         },
