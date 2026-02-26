@@ -18,17 +18,18 @@ The app opens at `http://localhost:8081`.
 
 ### Mock mode
 
-The service layer (`src/services/property.ts`) has `USE_MOCK = true`. All data is served from in-memory mocks so no backend / database / API keys are required for local development.
+All service files in `src/services/` have `USE_MOCK = true`. Data is served from in-memory mocks so no backend / database / API keys are required for local development. The `cloudbase.ts` file is a mock stub; the original `@cloudbase/adaptor` import was replaced to avoid build errors.
 
 ### Linting and type-checking
 
 ```bash
 npx eslint . --ext .ts,.tsx      # lint (TS files only; JS cloud functions have pre-existing warnings)
-npx tsc --noEmit                  # type-check
+npx tsc --noEmit                  # type-check (only pre-existing cloudbase.ts error expected)
 ```
 
-### Known pre-existing issues
+### Project structure
 
-- `src/services/cloudbase.ts` imports from `@cloudbase/adaptor` (non-existent package). This never runs locally because mock mode is active.
-- `src/services/tax.ts` is referenced by `PropertyDetailScreen` and `TaxCenterScreen` but does not exist yet. Those screens are not wired into the navigator, so the app still starts.
-- TypeScript reports errors for the above missing modules. These are pre-existing and do not block development.
+- `src/screens/` — 15 screens (Home, PropertyList/Detail/Add/Edit, TaxCenter/Detail/Consultation, DocumentList/Detail/Add, PolicyList/Detail, Chat, Profile)
+- `src/services/` — 7 service files (cloudbase, property, tax, document, policy, chat, user, rental) all with mock data
+- `src/types/index.ts` — All TypeScript type definitions
+- `cloudbase/functions/` — 6 serverless cloud functions (Node.js, not used in local dev)
