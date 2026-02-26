@@ -4,8 +4,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { PolicyArticle, PolicyCategory, RootStackParamList } from '../types';
 import { policyService } from '../services/policy';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PolicyList'>;
 
@@ -19,6 +21,13 @@ const CATEGORIES: { value: PolicyCategory | 'all'; label: string }[] = [
 
 const CATEGORY_ICONS: Record<string, string> = {
   tax: '💰', property: '🏠', immigration: '✈️', law: '⚖️',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  tax: colors.accent.gold,
+  property: colors.accent.sky,
+  immigration: colors.accent.violet,
+  law: colors.accent.coral,
 };
 
 export default function PolicyListScreen({ navigation }: Props) {
@@ -61,40 +70,49 @@ export default function PolicyListScreen({ navigation }: Props) {
     loadArticles();
   };
 
-  const renderArticle = ({ item }: { item: PolicyArticle }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('PolicyDetail', { articleId: item.id })}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.categoryTag}>
-          <Text style={styles.categoryIcon}>{CATEGORY_ICONS[item.category] || '📰'}</Text>
-          <Text style={styles.categoryText}>
-            {CATEGORIES.find(c => c.value === item.category)?.label || item.category}
-          </Text>
+  const renderArticle = ({ item }: { item: PolicyArticle }) => {
+    const catColor = CATEGORY_COLORS[item.category] || colors.accent.gold;
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('PolicyDetail', { articleId: item.id })}
+      >
+        <View style={styles.cardHeader}>
+          <View style={[styles.categoryTag, { backgroundColor: catColor + '18' }]}>
+            <Text style={styles.categoryIcon}>{CATEGORY_ICONS[item.category] || '📰'}</Text>
+            <Text style={[styles.categoryText, { color: catColor }]}>
+              {CATEGORIES.find(c => c.value === item.category)?.label || item.category}
+            </Text>
+          </View>
+          <Text style={styles.date}>{item.publishedAt}</Text>
         </View>
-        <Text style={styles.date}>{item.publishedAt}</Text>
-      </View>
-      <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.articleSummary} numberOfLines={3}>{item.summary}</Text>
-      <Text style={styles.source}>{item.source}</Text>
-    </TouchableOpacity>
-  );
+        <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.articleSummary} numberOfLines={3}>{item.summary}</Text>
+        <View style={styles.cardFooter}>
+          <Text style={styles.source}>{item.source}</Text>
+          <Text style={styles.readMore}>阅读全文 →</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📚</Text>
       <Text style={styles.emptyText}>暂无政策资讯</Text>
+      <Text style={styles.emptySubtext}>下拉刷新试试</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.searchBar}>
+        <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="搜索政策资讯..."
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.text.tertiary}
           value={searchText}
           onChangeText={setSearchText}
           onSubmitEditing={handleSearch}
@@ -108,17 +126,30 @@ export default function PolicyListScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.filterContainer}>
-        {CATEGORIES.map((c) => (
-          <TouchableOpacity
-            key={c.value}
-            style={[styles.filterBtn, filter === c.value && styles.filterBtnActive]}
-            onPress={() => setFilter(c.value)}
-          >
-            <Text style={[styles.filterText, filter === c.value && styles.filterTextActive]}>
-              {c.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {CATEGORIES.map((c) => {
+          const isActive = filter === c.value;
+          return isActive ? (
+            <LinearGradient
+              key={c.value}
+              colors={[colors.accent.gold, colors.gradient.goldEnd]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.filterBtnGradient}
+            >
+              <TouchableOpacity onPress={() => setFilter(c.value)}>
+                <Text style={styles.filterTextActive}>{c.label}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          ) : (
+            <TouchableOpacity
+              key={c.value}
+              style={styles.filterBtn}
+              onPress={() => setFilter(c.value)}
+            >
+              <Text style={styles.filterText}>{c.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <FlatList
@@ -128,48 +159,164 @@ export default function PolicyListScreen({ navigation }: Props) {
         contentContainerStyle={styles.list}
         ListEmptyComponent={!loading ? renderEmpty : null}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent.gold}
+            colors={[colors.accent.gold]}
+          />
         }
+        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  searchBar: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', marginHorizontal: 16, marginTop: 12,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4,
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg.primary,
   },
-  searchInput: { flex: 1, fontSize: 15, color: '#333', paddingVertical: 10 },
-  clearBtn: { fontSize: 16, color: '#999', padding: 8 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.input,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
+  searchIcon: {
+    fontSize: fontSize.md,
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text.primary,
+    paddingVertical: spacing.md,
+  },
+  clearBtn: {
+    fontSize: fontSize.md,
+    color: colors.text.tertiary,
+    padding: spacing.sm,
+  },
   filterContainer: {
-    flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 12, gap: 8,
+    flexDirection: 'row',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
   filterBtn: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.card,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
   },
-  filterBtnActive: { backgroundColor: '#9C27B0' },
-  filterText: { fontSize: 13, color: '#666' },
-  filterTextActive: { color: '#fff', fontWeight: '600' },
-  list: { padding: 16, paddingTop: 4 },
+  filterBtnGradient: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+  },
+  filterText: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+  },
+  filterTextActive: {
+    fontSize: fontSize.sm,
+    color: colors.text.inverse,
+    fontWeight: '700',
+  },
+  list: {
+    padding: spacing.lg,
+    paddingTop: spacing.xs,
+  },
   card: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    ...shadow.card,
   },
   cardHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
-  categoryTag: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  categoryIcon: { fontSize: 14 },
-  categoryText: { fontSize: 12, color: '#9C27B0', fontWeight: '600' },
-  date: { fontSize: 12, color: '#999' },
-  articleTitle: { fontSize: 17, fontWeight: '700', color: '#333', marginBottom: 8, lineHeight: 24 },
-  articleSummary: { fontSize: 14, color: '#666', lineHeight: 20, marginBottom: 10 },
-  source: { fontSize: 12, color: '#aaa' },
-  emptyContainer: { alignItems: 'center', paddingTop: 80 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 18, color: '#999' },
+  categoryTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+  },
+  categoryIcon: {
+    fontSize: fontSize.sm,
+  },
+  categoryText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  date: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+  },
+  articleTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    lineHeight: 24,
+    letterSpacing: 0.3,
+  },
+  articleSummary: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.border.subtle,
+    paddingTop: spacing.md,
+  },
+  source: {
+    fontSize: fontSize.xs,
+    color: colors.text.tertiary,
+  },
+  readMore: {
+    fontSize: fontSize.xs,
+    color: colors.accent.gold,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: spacing.huge * 2,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSize.lg,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    marginTop: spacing.xs,
+  },
 });

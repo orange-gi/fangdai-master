@@ -5,8 +5,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ChatMessage, RootStackParamList } from '../types';
 import { chatService } from '../services/chat';
+import { colors, spacing, radius, fontSize, shadow } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -80,12 +82,29 @@ export default function ChatScreen({ route }: Props) {
     const isUser = item.role === 'user';
     return (
       <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.aiBubble]}>
-        {!isUser && <Text style={styles.aiAvatar}>🤖</Text>}
-        <View style={[styles.messageContent, isUser ? styles.userContent : styles.aiContent]}>
-          <Text style={[styles.messageText, isUser ? styles.userText : styles.aiText]}>
-            {item.content}
-          </Text>
-        </View>
+        {!isUser && (
+          <View style={styles.aiAvatarContainer}>
+            <Text style={styles.aiAvatar}>🤖</Text>
+          </View>
+        )}
+        {isUser ? (
+          <LinearGradient
+            colors={[colors.accent.gold, colors.gradient.goldEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.messageContent, styles.userContent]}
+          >
+            <Text style={[styles.messageText, styles.userText]}>
+              {item.content}
+            </Text>
+          </LinearGradient>
+        ) : (
+          <View style={[styles.messageContent, styles.aiContent]}>
+            <Text style={[styles.messageText, styles.aiText]}>
+              {item.content}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -104,12 +123,15 @@ export default function ChatScreen({ route }: Props) {
           renderItem={renderMessage}
           contentContainerStyle={styles.messageList}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          showsVerticalScrollIndicator={false}
           ListFooterComponent={
             sending ? (
               <View style={styles.typingIndicator}>
-                <Text style={styles.aiAvatar}>🤖</Text>
+                <View style={styles.aiAvatarContainer}>
+                  <Text style={styles.aiAvatar}>🤖</Text>
+                </View>
                 <View style={styles.typingDots}>
-                  <ActivityIndicator size="small" color="#4CAF50" />
+                  <ActivityIndicator size="small" color={colors.accent.jade} />
                   <Text style={styles.typingText}>正在思考...</Text>
                 </View>
               </View>
@@ -120,6 +142,7 @@ export default function ChatScreen({ route }: Props) {
                   <TouchableOpacity
                     key={i}
                     style={styles.quickBtn}
+                    activeOpacity={0.7}
                     onPress={() => { setInputText(q); }}
                   >
                     <Text style={styles.quickText}>{q}</Text>
@@ -131,23 +154,41 @@ export default function ChatScreen({ route }: Props) {
         />
 
         <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="输入您的问题..."
-            placeholderTextColor="#999"
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={1000}
-            onSubmitEditing={handleSend}
-            blurOnSubmit={false}
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="输入您的问题..."
+              placeholderTextColor={colors.text.tertiary}
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={1000}
+              onSubmitEditing={handleSend}
+              blurOnSubmit={false}
+            />
+          </View>
           <TouchableOpacity
-            style={[styles.sendBtn, (!inputText.trim() || sending) && styles.sendBtnDisabled]}
+            activeOpacity={0.7}
             onPress={handleSend}
             disabled={!inputText.trim() || sending}
           >
-            <Text style={styles.sendBtnText}>发送</Text>
+            <LinearGradient
+              colors={
+                !inputText.trim() || sending
+                  ? [colors.bg.card, colors.bg.card]
+                  : [colors.accent.gold, colors.gradient.goldEnd]
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.sendBtn}
+            >
+              <Text style={[
+                styles.sendBtnText,
+                (!inputText.trim() || sending) && styles.sendBtnTextDisabled,
+              ]}>
+                发送
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -156,43 +197,150 @@ export default function ChatScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f2f5' },
-  keyboardView: { flex: 1 },
-  messageList: { padding: 16, paddingBottom: 8 },
-  messageBubble: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-start' },
-  userBubble: { justifyContent: 'flex-end' },
-  aiBubble: { justifyContent: 'flex-start' },
-  aiAvatar: { fontSize: 28, marginRight: 8, marginTop: 2 },
-  messageContent: { maxWidth: '75%', borderRadius: 16, padding: 14 },
-  userContent: { backgroundColor: '#4CAF50', borderBottomRightRadius: 4 },
-  aiContent: { backgroundColor: '#fff', borderBottomLeftRadius: 4 },
-  messageText: { fontSize: 15, lineHeight: 22 },
-  userText: { color: '#fff' },
-  aiText: { color: '#333' },
-  typingIndicator: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  typingDots: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 16, padding: 12 },
-  typingText: { fontSize: 13, color: '#999' },
-  quickQuestions: { marginTop: 8, padding: 4 },
-  quickTitle: { fontSize: 14, color: '#999', marginBottom: 10 },
-  quickBtn: {
-    backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12,
-    borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#e8e8e8',
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg.primary,
   },
-  quickText: { fontSize: 14, color: '#4CAF50' },
+  keyboardView: {
+    flex: 1,
+  },
+  messageList: {
+    padding: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  messageBubble: {
+    flexDirection: 'row',
+    marginBottom: spacing.lg,
+    alignItems: 'flex-start',
+  },
+  userBubble: {
+    justifyContent: 'flex-end',
+  },
+  aiBubble: {
+    justifyContent: 'flex-start',
+  },
+  aiAvatarContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
+  aiAvatar: {
+    fontSize: 18,
+  },
+  messageContent: {
+    maxWidth: '75%',
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+  },
+  userContent: {
+    borderBottomRightRadius: spacing.xs,
+    ...shadow.card,
+  },
+  aiContent: {
+    backgroundColor: colors.bg.card,
+    borderBottomLeftRadius: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
+  messageText: {
+    fontSize: fontSize.md,
+    lineHeight: 24,
+  },
+  userText: {
+    color: colors.text.inverse,
+    fontWeight: '500',
+  },
+  aiText: {
+    color: colors.text.primary,
+  },
+  typingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
+  typingText: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+  },
+  quickQuestions: {
+    marginTop: spacing.sm,
+    padding: spacing.xs,
+  },
+  quickTitle: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    marginBottom: spacing.md,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  quickBtn: {
+    backgroundColor: colors.bg.card,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border.accent,
+  },
+  quickText: {
+    fontSize: fontSize.sm,
+    color: colors.accent.gold,
+    fontWeight: '500',
+  },
   inputBar: {
-    flexDirection: 'row', alignItems: 'flex-end',
-    paddingHorizontal: 12, paddingVertical: 8,
-    backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e8e8e8',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.bg.secondary,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.subtle,
+    gap: spacing.sm,
+  },
+  inputWrapper: {
+    flex: 1,
+    backgroundColor: colors.bg.input,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    paddingHorizontal: spacing.lg,
   },
   textInput: {
-    flex: 1, backgroundColor: '#f5f5f5', borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 10, fontSize: 15,
-    color: '#333', maxHeight: 100, marginRight: 8,
+    fontSize: fontSize.md,
+    color: colors.text.primary,
+    paddingVertical: spacing.md,
+    maxHeight: 100,
   },
   sendBtn: {
-    backgroundColor: '#4CAF50', borderRadius: 20,
-    paddingHorizontal: 18, paddingVertical: 10,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
   },
-  sendBtnDisabled: { backgroundColor: '#c8e6c9' },
-  sendBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  sendBtnText: {
+    color: colors.text.inverse,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  sendBtnTextDisabled: {
+    color: colors.text.tertiary,
+  },
 });
